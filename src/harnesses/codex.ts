@@ -16,15 +16,14 @@ import type { Autobot, PlannedDir, Scope } from "../types.ts";
 
 /**
  * Claude model tiers mapped to the Codex model to prescribe for each. Tiers are
- * relative cost bands: fable is the strongest, sonnet the cheapest. Any other
+ * relative capability bands: Fable uses Astra, Opus uses Sol, and Sonnet uses Terra. Any other
  * model string in AUTOBOT.md is passed through as a Codex model id unchanged.
- * Ids per learn.chatgpt.com/docs/models: gpt-5.6-sol, gpt-5.6-terra, gpt-5.6-luna.
+ * Model IDs: https://developers.openai.com/api/docs/models.
  */
 export const CODEX_MODELS: Record<string, string> = {
-  fable: "gpt-5.6-sol",
+  fable: "gpt-6-astra",
   opus: "gpt-5.6-sol",
   sonnet: "gpt-5.6-terra",
-  haiku: "gpt-5.6-terra",
 };
 
 /** Codex accepts minimal | low | medium | high | xhigh; Claude's low/medium/high pass through. */

@@ -148,8 +148,8 @@ Project-scoped installs (`--scope project`) write to `./.codex/agents` and
 `./.agents/skills`; Codex only loads those in a trusted project.
 
 **Codex models.** Claude tiers in `AUTOBOT.md` are mapped to concrete Codex
-models in `src/harnesses/codex.ts` (`CODEX_MODELS`): fable and opus prescribe
-`gpt-5.6-sol`, sonnet and haiku prescribe `gpt-5.6-terra`. Effort passes through
+models in `src/harnesses/codex.ts` (`CODEX_MODELS`): fable prescribes `gpt-6-astra`, opus prescribes
+`gpt-5.6-sol`, and sonnet prescribes `gpt-5.6-terra`. Effort passes through
 as `model_reasoning_effort` (Codex accepts minimal, low, medium, high, xhigh).
 Bots whose Claude tool list has no Write or Edit get `sandbox_mode = "read-only"`;
 the rest get `workspace-write`. Any other `model` value is written as a Codex

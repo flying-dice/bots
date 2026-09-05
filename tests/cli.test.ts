@@ -167,6 +167,7 @@ describe("real autobots and skills", () => {
   });
   test("codex adapter prescribes a Codex model per tier and passes effort through", () => {
     const { CODEX_MODELS } = require("../src/harnesses/codex.ts");
+    expect(CODEX_MODELS).toEqual({ fable: "gpt-6-astra", opus: "gpt-5.6-sol", sonnet: "gpt-5.6-terra" });
     for (const b of bots) {
       const toml = HARNESSES.codex.plan(b, "project", "/x").files[0].content;
       expect(toml).toContain(`model = "${CODEX_MODELS[b.model!]}"`);
@@ -174,7 +175,7 @@ describe("real autobots and skills", () => {
       expect(toml).toContain(`yours is ${CODEX_MODELS[b.model!]} at ${b.effort} effort`);
     }
     const prowl = HARNESSES.codex.plan(bots.find((b) => b.name === "prowl")!, "project", "/x").files[0].content;
-    expect(prowl).toContain('model = "gpt-5.6-sol"');
+    expect(prowl).toContain('model = "gpt-6-astra"');
     expect(prowl).toContain('sandbox_mode = "read-only"');
     expect(HARNESSES.codex.plan(bots.find((b) => b.name === "bumblebee")!, "project", "/x").files[0].content).toContain('sandbox_mode = "workspace-write"');
   });
