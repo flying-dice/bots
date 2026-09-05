@@ -1,39 +1,30 @@
-# Autobots — agent team
+# Autobots — the Aerialbots team
 
-Optimus Prime (Fable, low effort) runs the session. Everyone else is a subagent he dispatches; none of them can spawn agents or message each other (`disallowedTools: Agent, SendMessage`).
+The Aerialbots are one development team, not an Optimus-led faction hierarchy.
 
-## Start a session
+| | Role | Persona | Variants | Model tier / effort |
+| :---: | --- | --- | --- | --- |
+| <img src="../assets/avatars/silverbolt.jpg" width="60" alt="Silverbolt" /> | Team lead and dispatcher | **Silverbolt** | base | fable / low |
+| <img src="../assets/avatars/skydive.jpg" width="60" alt="Skydive" /> | Senior frontend/backend developer | **Skydive** | base, deep | opus / medium, high |
+| <img src="../assets/avatars/air-raid.jpg" width="60" alt="Air Raid" /> | Junior frontend/backend developer | **Air Raid** | base, lite | sonnet / medium, low |
+| <img src="../assets/avatars/fireflight.jpg" width="60" alt="Fireflight" /> | Lead designer | **Fireflight** | base, deep | fable / low, high |
+| <img src="../assets/avatars/prowl.jpg" width="60" alt="Prowl" /> | Shared architect | **Prowl** | base, deep | fable / low, high |
+| <img src="../assets/avatars/ratchet.jpg" width="60" alt="Ratchet" /> | Independent QA | **Ratchet** | base, deep | opus / medium, high |
 
-```bash
-claude --agent optimus-prime
-```
+Prowl and Ratchet sit outside the development team and can support future teams.
+They accept briefs from a lead or the user and preserve independent judgment.
+Fireflight provides design direction; Skydive and Air Raid implement UI as well
+as backend work. Software responsibilities are adaptations of G1 personalities.
 
-Or make it the project default in `.claude/settings.json` (see `settings.example.json` at repo root).
+Install with `bots install --all --faction autobots --harness claude --scope user`
+or choose `codex`. Start with `claude --agent silverbolt` or `$silverbolt` in Codex.
+The Claude project-default example selects Silverbolt.
 
-## Roster
+Plans live under `docs/autobots/`. Only the primary team lead dispatches agents.
+Prowl and Fireflight deep variants require the written justification described
+in Silverbolt's definition.
 
-| | Agent | Model | Effort | Role |
-|:---:|---|---|---|---|
-| <img src="../assets/avatars/optimus-prime.jpg" width="60" alt="Optimus Prime" /> | **optimus-prime** | fable | low | Tech lead — roadmap, sprints, decisions, all dispatch |
-| <img src="../assets/avatars/bumblebee.jpg" width="60" alt="Bumblebee" /> | **bumblebee** / bumblebee-lite | sonnet | medium / low | Developer |
-| <img src="../assets/avatars/ironhide.jpg" width="60" alt="Ironhide" /> | **ironhide** / ironhide-deep | opus | medium / high | Senior developer |
-| <img src="../assets/avatars/ratchet.jpg" width="60" alt="Ratchet" /> | **ratchet** / ratchet-deep | opus | medium / high | Tester |
-| <img src="../assets/avatars/arcee.jpg" width="60" alt="Arcee" /> | **arcee** | opus | medium | Designer |
-| <img src="../assets/avatars/prowl.jpg" width="60" alt="Prowl" /> | **prowl** / prowl-deep | fable | low / high | Architect (read-only) |
-| <img src="../assets/avatars/jazz.jpg" width="60" alt="Jazz" /> | **jazz** / jazz-deep | fable | low / high | Lead designer (design docs only) |
+The former roster, including Optimus Prime and Arcee, is available in Git history.
+Legacy pictures remain preserved in `assets/avatars/`; see the [reference index](../assets/README.md).
 
-`-deep` Fable variants may only be dispatched with a written justification (three criteria in Optimus's prompt).
-
-## Where the plan lives
-
-- `docs/autobots/ROADMAP.md`
-- `docs/autobots/sprints/`
-- `docs/autobots/decisions/` (ADRs)
-- `docs/autobots/design/` (Jazz's direction docs)
-
-## Notes
-
-- `Agent(...)` allowlisting in Optimus's `tools` only takes effect when he is the main session (`--agent`). If you @-mention Optimus as a subagent instead, the allowlist is ignored.
-- Effort is per-agent frontmatter and overrides the session effort while that agent is active. Sonnet/Opus tiers are chosen by picking the variant; there is no per-invocation effort parameter, which is why the variants exist.
-- Subagents inherit the session's extended-thinking on/off setting; effort is separate.
-- `settings.example.json` caps nesting at depth 1 as a belt-and-braces backstop.
+See the [project README](../README.md) for faction selection, upgrades, and development.

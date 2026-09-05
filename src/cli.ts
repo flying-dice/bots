@@ -1,29 +1,30 @@
 import { existsSync } from "node:fs";
-import { findAutobots } from "./autobots.ts";
+import { findBots, RETIRED_AUTOBOTS } from "./bots.ts";
 import { HARNESSES, HARNESS_IDS, resolveHarnesses } from "./harnesses/index.ts";
 import { install, uninstall, status, botItem, skillItem, readManifest, manifestPath, type Item } from "./install.ts";
-import type { Autobot, Catalog, Scope } from "./types.ts";
+import type { Bot, Catalog, Scope } from "./types.ts";
 
-export const RELEASE_URL = "https://github.com/flying-dice/autobots/releases/latest/download/autobots.ts";
+export const RELEASE_URL = "https://github.com/flying-dice/autobots/releases/latest/download/bots.ts";
 
-const HELP = `autobots — manage the Autobots agent team across coding harnesses
+const HELP = `bots — manage the Bots agent team across coding harnesses
 
 Usage:
-  autobots list                         Show the Autobots in this repo
-  autobots skills                       Show the shared skills in this repo
-  autobots harnesses                    Show supported harnesses and where they are detected
-  autobots install <bot...> [options]   Install Autobots into a harness
-  autobots install --all [options]      Install every Autobot and shared skill; prunes anything this version no longer ships
-  autobots uninstall <bot...> [options] Remove Autobots from a harness
-  autobots status [options]             Show what is installed where, and the manifest's recorded version
-  autobots doctor                       Detect which harnesses are present on this machine
-  autobots show <bot>                   Print an Autobot definition
+  bots list                         Show bots from either faction
+  bots skills                       Show the shared skills in this repo
+  bots harnesses                    Show supported harnesses and where they are detected
+  bots install <bot...> [options]   Install Bots into a harness
+  bots install --all [options]      Install the selected faction and shared skills
+  bots uninstall <bot...> [options] Remove Bots from a harness
+  bots status [options]             Show what is installed where, and the manifest's recorded version
+  bots doctor                       Detect which harnesses are present on this machine
+  bots show <bot>                   Print an Bot definition
 
 Required for install, uninstall and status (nothing is assumed):
   -H, --harness <ids>   Comma-separated: ${HARNESS_IDS.join(", ")}, or all
   -S, --scope <scope>   user (home directory config) or project (current directory)
 
 Other options:
+  --faction <side>     autobots, decepticons, or all (default); filters bots
   -n, --dry-run         Print what would change without touching disk
   -s, --skills          Also include the shared skills (implied by --all)
   -h, --help            Show this help
@@ -40,6 +41,7 @@ interface Args {
   cmd: string | undefined;
   positional: string[];
   harness?: string;
+  faction?: string;
   scope?: string;
   all: boolean;
   skills: boolean;
@@ -54,6 +56,8 @@ function parseArgs(argv: string[]): Args {
     const t = argv[i];
     if (t === "-h" || t === "--help") a.help = true;
     else if (t === "-v" || t === "--version") a.version = true;
+    else if (t === "--faction") a.faction = argv[++i] ?? "";
+    else if (t.startsWith("--faction=")) a.faction = t.slice("--faction=".length);
     else if (t === "-S" || t === "--scope") a.scope = argv[++i];
     else if (t.startsWith("--scope=")) a.scope = t.slice("--scope=".length);
     else if (t === "-n" || t === "--dry-run") a.dryRun = true;
@@ -78,13 +82,13 @@ function requireTarget(args: Args): { harnesses: ReturnType<typeof resolveHarnes
   return { harnesses: resolveHarnesses(args.harness), scope: args.scope };
 }
 
-function pickBots(args: Args, all: Autobot[]): Autobot[] {
+function pickBots(args: Args, all: Bot[]): Bot[] {
   if (args.all) return all;
   if (args.positional.length === 0) {
     if (args.skills) return [];
-    throw new Error("Name at least one Autobot, or pass --all.");
+    throw new Error("Name at least one Bot, or pass --all.");
   }
-  return findAutobots(all, args.positional);
+  return findBots(all, args.positional);
 }
 
 export interface Runtime {
@@ -96,11 +100,14 @@ export interface Runtime {
 export function main(argv: string[], rt: Runtime) {
   const args = parseArgs(argv);
   const cwd = process.cwd();
-  const bots = rt.catalog.autobots;
+  if (args.faction !== undefined && !["autobots", "decepticons", "all"].includes(args.faction)) {
+    throw new Error("Unknown faction. Use autobots, decepticons, or all.");
+  }
+  const bots = rt.catalog.bots.filter((b) => !args.faction || args.faction === "all" || b.faction === args.faction);
   const sharedSkills = rt.catalog.skills;
 
   if (args.version || args.cmd === "version") {
-    console.log(`autobots ${rt.version}`);
+    console.log(`bots ${rt.version}`);
     return;
   }
   if (args.help || !args.cmd) {
@@ -111,13 +118,13 @@ export function main(argv: string[], rt: Runtime) {
   switch (args.cmd) {
     case "list": {
       if (bots.length === 0) {
-        console.log("No Autobots found in autobots/. Add a directory with an AUTOBOT.md to get started.");
+        console.log("No Bots found in bots/. Add a directory with an BOT.md to get started.");
         return;
       }
       const w = Math.max(...bots.map((b) => b.name.length));
       for (const b of bots) {
         const skills = b.skills.length ? `  [${b.skills.length} skill${b.skills.length === 1 ? "" : "s"}]` : "";
-        console.log(`${b.name.padEnd(w)}  ${b.description}${skills}`);
+        console.log(`${b.name.padEnd(w)}  [${b.faction}] ${b.description}${skills}`);
       }
       return;
     }
@@ -146,7 +153,7 @@ export function main(argv: string[], rt: Runtime) {
       return;
     }
     case "show": {
-      const [b] = findAutobots(bots, [args.positional[0] ?? ""]);
+      const [b] = findBots(bots, [args.positional[0] ?? ""]);
       console.log(`# ${b.name}\n${b.description}\n`);
       if (b.model) console.log(`model: ${b.model}`);
       if (b.tools) console.log(`tools: ${b.tools.join(", ")}`);
@@ -162,9 +169,14 @@ export function main(argv: string[], rt: Runtime) {
       const items: Item[] = [...skills.map(skillItem), ...chosen.map(botItem)];
       const opts = { scope, cwd, dryRun: args.dryRun, version: rt.version };
       const installing = args.cmd === "install";
+      const prune = args.all && (!args.faction || args.faction === "all")
+        ? true
+        : args.all && args.faction === "autobots"
+          ? (key: string) => RETIRED_AUTOBOTS.some((name) => key === `bot:${name}`)
+          : false;
       for (const h of targets) {
         console.log(`\n${h.label} (${scope})`);
-        const results = installing ? install(items, h, opts, args.all) : uninstall(items, h, opts);
+        const results = installing ? install(items, h, opts, prune) : uninstall(items, h, opts);
         for (const [key, actions] of results) {
           if (actions.length === 0) {
             console.log(`  ${key}: nothing to do`);
@@ -196,7 +208,7 @@ export function main(argv: string[], rt: Runtime) {
       return;
     }
     default:
-      throw new Error(`Unknown command "${args.cmd}". Run \`autobots --help\`.`);
+      throw new Error(`Unknown command "${args.cmd}". Run \`bots --help\`.`);
   }
 }
 

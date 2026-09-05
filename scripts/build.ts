@@ -1,6 +1,6 @@
 /**
- * Bundle the CLI plus every Autobot and skill into one self-contained script,
- * dist/autobots.ts, runnable with `curl -fsSL <url> | bun run - <command>`.
+ * Bundle the CLI plus every Bot and skill into one self-contained script,
+ * dist/bots.ts, runnable with `curl -fsSL <url> | bun run - <command>`.
  */
 import { mkdirSync, writeFileSync, rmSync } from "node:fs";
 import { resolve, dirname } from "node:path";
@@ -19,7 +19,7 @@ writeFileSync(
   entry,
   [
     `import { run } from "../src/cli.ts";`,
-    `import { loadCatalog } from "../src/autobots.ts";`,
+    `import { loadCatalog } from "../src/bots.ts";`,
     `const tree = ${JSON.stringify(tree)};`,
     `run(process.argv.slice(2), { catalog: loadCatalog(tree), version: ${JSON.stringify(pkg.version)} });`,
     "",
@@ -32,8 +32,8 @@ if (!result.success) {
   process.exit(1);
 }
 const code = await result.outputs[0].text();
-const banner = `// autobots ${pkg.version} — self-contained bundle. Run: curl -fsSL <release-url> | bun run - <command>\n`;
-const out = resolve(dist, "autobots.ts");
+const banner = `// bots ${pkg.version} — self-contained bundle. Run: curl -fsSL <release-url> | bun run - <command>\n`;
+const out = resolve(dist, "bots.ts");
 writeFileSync(out, banner + code);
 rmSync(entry);
 const files = Object.keys(tree).length;

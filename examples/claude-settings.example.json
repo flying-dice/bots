@@ -1,9 +1,14 @@
 {
-  "agent": "optimus-prime",
+  "agent": "silverbolt",
   "env": {
     "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH": "1"
   },
   "permissions": {
-    "deny": ["Agent(fork)", "Agent(Explore)", "Agent(Plan)", "Agent(general-purpose)"]
+    "deny": [
+      "Agent(fork)",
+      "Agent(Explore)",
+      "Agent(Plan)",
+      "Agent(general-purpose)"
+    ]
   }
 }

@@ -18,6 +18,6 @@ jobs:
       - run: bun test
       - run: bun run build
       - name: Smoke test the bundle over stdin
-        run: cat dist/autobots.ts | bun run - list
+        run: cat dist/bots.ts | bun run - list
       - name: "Smoke test install from a repo tarball (what bunx github: does)"
         run: bun run smoke:tarball

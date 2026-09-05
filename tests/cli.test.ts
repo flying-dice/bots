@@ -3,7 +3,7 @@ import { mkdtempSync, existsSync, readFileSync, mkdirSync, writeFileSync } from 
 import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { parseFrontmatter, stringifyFrontmatter } from "../src/frontmatter.ts";
-import { loadAutobots, loadCatalog } from "../src/autobots.ts";
+import { loadBots, loadCatalog } from "../src/bots.ts";
 import { readTree, children, type Tree } from "../src/tree.ts";
 import { HARNESSES, HARNESS_IDS, resolveHarnesses } from "../src/harnesses/index.ts";
 import { install, uninstall, status, botItem, skillItem, readManifest, manifestPath } from "../src/install.ts";
@@ -13,10 +13,10 @@ const catalog = loadCatalog(readTree(REPO));
 
 function fixtureTree(): Tree {
   return {
-    "autobots/optimus/AUTOBOT.md": `---\nname: optimus\ndescription: Leads the team\nmodel: opus\ntools: [Read, Bash]\n---\n\nYou are Optimus.\n`,
-    "autobots/optimus/skills/roll-out/SKILL.md": "---\nname: roll-out\ndescription: Go\n---\nGo.\n",
-    "autobots/optimus/skills/roll-out/ref/notes.md": "extra file",
-    "autobots/_ignored/AUTOBOT.md": "---\nname: nope\n---\n",
+    "bots/starscream/BOT.md": `---\nname: starscream\ndescription: Leads the team\nmodel: opus\ntools: [Read, Bash]\n---\n\nYou are Starscream.\n`,
+    "bots/starscream/skills/roll-out/SKILL.md": "---\nname: roll-out\ndescription: Go\n---\nGo.\n",
+    "bots/starscream/skills/roll-out/ref/notes.md": "extra file",
+    "bots/_ignored/BOT.md": "---\nname: nope\n---\n",
     "skills/shared-one/SKILL.md": "---\nname: shared-one\ndescription: Shared\n---\nShared.\n",
   };
 }
@@ -36,7 +36,7 @@ describe("frontmatter", () => {
 describe("tree", () => {
   test("readTree matches the on-disk files and children() groups them", () => {
     const tree = readTree(REPO);
-    expect(tree["autobots/optimus-prime/AUTOBOT.md"]).toBe(readFileSync(join(REPO, "autobots/optimus-prime/AUTOBOT.md"), "utf8"));
+    expect(tree["bots/starscream/BOT.md"]).toBe(readFileSync(join(REPO, "bots/starscream/BOT.md"), "utf8"));
     expect([...children(tree, "skills").keys()].sort()).toEqual(catalog.skills.map((s) => s.name));
   });
 });
@@ -44,10 +44,10 @@ describe("tree", () => {
 describe("loadCatalog", () => {
   test("loads bots, nested skill files and shared skills, skips underscore dirs", () => {
     const c = loadCatalog(fixtureTree());
-    expect(c.autobots.map((b) => b.name)).toEqual(["optimus"]);
-    expect(c.autobots[0].tools).toEqual(["Read", "Bash"]);
-    expect(c.autobots[0].skills[0].files).toEqual({ "SKILL.md": expect.any(String), "ref/notes.md": "extra file" });
-    expect(c.autobots[0].prompt).toBe("You are Optimus.");
+    expect(c.bots.map((b) => b.name)).toEqual(["starscream"]);
+    expect(c.bots[0].tools).toEqual(["Read", "Bash"]);
+    expect(c.bots[0].skills[0].files).toEqual({ "SKILL.md": expect.any(String), "ref/notes.md": "extra file" });
+    expect(c.bots[0].prompt).toBe("You are Starscream.");
     expect(c.skills.map((s) => s.name)).toEqual(["shared-one"]);
   });
 });
@@ -63,7 +63,7 @@ describe("harnesses", () => {
 
   for (const id of HARNESS_IDS) {
     test(`${id}: install, status, uninstall (project scope)`, () => {
-      const [bot] = loadAutobots(fixtureTree());
+      const [bot] = loadBots(fixtureTree());
       const item = botItem(bot);
       const cwd = mkdtempSync(join(tmpdir(), "proj-"));
       const h = HARNESSES[id];
@@ -73,7 +73,7 @@ describe("harnesses", () => {
       expect(existsSync(join(h.skillsRoot("project", cwd), "roll-out", "ref", "notes.md"))).toBe(true);
       expect(status(item, h, "project", cwd)).toBe("installed");
       const main = readFileSync(h.plan(bot, "project", cwd).files[0].path, "utf8");
-      expect(main).toContain("You are Optimus.");
+      expect(main).toContain("You are Starscream.");
       expect(main).toContain("Leads the team");
       expect(install([item], h, opts(cwd)).get(item.key)![0].kind).toBe("unchanged");
       const m = readManifest(h, "project", cwd);
@@ -97,7 +97,7 @@ describe("harnesses", () => {
   }
 
   test("dry run touches nothing, not even the manifest", () => {
-    const [bot] = loadAutobots(fixtureTree());
+    const [bot] = loadBots(fixtureTree());
     const cwd = mkdtempSync(join(tmpdir(), "proj-"));
     install([botItem(bot)], HARNESSES.claude, opts(cwd, true));
     expect(status(botItem(bot), HARNESSES.claude, "project", cwd)).toBe("missing");
@@ -108,7 +108,7 @@ describe("harnesses", () => {
     const h = HARNESSES.claude;
     const cwd = mkdtempSync(join(tmpdir(), "proj-"));
     const v1 = loadCatalog(fixtureTree());
-    install([...v1.skills.map(skillItem), ...v1.autobots.map(botItem)], h, { ...opts(cwd), version: "1.0.0" }, true);
+    install([...v1.skills.map(skillItem), ...v1.bots.map(botItem)], h, { ...opts(cwd), version: "1.0.0" }, true);
     const sharedOne = join(h.skillsRoot("project", cwd), "shared-one");
     const rollOut = join(h.skillsRoot("project", cwd), "roll-out");
     expect(existsSync(sharedOne)).toBe(true);
@@ -117,52 +117,52 @@ describe("harnesses", () => {
     // v2: the shared skill is gone, the bot's skill was renamed, a new bot appeared.
     const tree = fixtureTree();
     delete tree["skills/shared-one/SKILL.md"];
-    delete tree["autobots/optimus/skills/roll-out/SKILL.md"];
-    delete tree["autobots/optimus/skills/roll-out/ref/notes.md"];
-    tree["autobots/optimus/skills/transform/SKILL.md"] = "---\nname: transform\n---\nGo.\n";
-    tree["autobots/bumblebee/AUTOBOT.md"] = "---\nname: bumblebee\ndescription: Dev\n---\n\nBee.\n";
+    delete tree["bots/starscream/skills/roll-out/SKILL.md"];
+    delete tree["bots/starscream/skills/roll-out/ref/notes.md"];
+    tree["bots/starscream/skills/transform/SKILL.md"] = "---\nname: transform\n---\nGo.\n";
+    tree["bots/skywarp/BOT.md"] = "---\nname: skywarp\ndescription: Dev\n---\n\nBee.\n";
     const v2 = loadCatalog(tree);
-    const results = install([...v2.skills.map(skillItem), ...v2.autobots.map(botItem)], h, { ...opts(cwd), version: "2.0.0" }, true);
+    const results = install([...v2.skills.map(skillItem), ...v2.bots.map(botItem)], h, { ...opts(cwd), version: "2.0.0" }, true);
 
     expect(existsSync(sharedOne)).toBe(false);
     expect(existsSync(rollOut)).toBe(false);
     expect(existsSync(join(h.skillsRoot("project", cwd), "transform", "SKILL.md"))).toBe(true);
-    expect(existsSync(join(cwd, ".claude/agents/autobots/bumblebee.md"))).toBe(true);
+    expect(existsSync(join(cwd, ".claude/agents/bots/skywarp.md"))).toBe(true);
     expect(results.get("skill:shared-one")!.map((a) => a.kind)).toEqual(["prune"]);
-    expect(results.get("bot:optimus")!.map((a) => a.kind)).toEqual(["prune", "unchanged", "copy"]);
+    expect(results.get("bot:starscream")!.map((a) => a.kind)).toEqual(["prune", "unchanged", "copy"]);
     const m = readManifest(h, "project", cwd);
     expect(m.version).toBe("2.0.0");
-    expect(Object.keys(m.items).sort()).toEqual(["bot:bumblebee", "bot:optimus"]);
+    expect(Object.keys(m.items).sort()).toEqual(["bot:skywarp", "bot:starscream"]);
 
     // Installing one bot by name never prunes the others.
-    install([botItem(v2.autobots[0])], h, { ...opts(cwd), version: "2.0.1" });
-    expect(Object.keys(readManifest(h, "project", cwd).items).sort()).toEqual(["bot:bumblebee", "bot:optimus"]);
+    install([botItem(v2.bots[0])], h, { ...opts(cwd), version: "2.0.1" });
+    expect(Object.keys(readManifest(h, "project", cwd).items).sort()).toEqual(["bot:skywarp", "bot:starscream"]);
   });
 });
 
-describe("real autobots and skills", () => {
-  const bots = catalog.autobots;
-  test("all twelve load with Claude-specific frontmatter intact", () => {
+describe("real bots and skills", () => {
+  const bots = catalog.bots.filter((b) => b.faction === "decepticons");
+  test("all eleven load with Claude-specific frontmatter intact", () => {
     expect(bots.map((b) => b.name)).toEqual([
-      "arcee", "bumblebee", "bumblebee-lite", "ironhide", "ironhide-deep", "jazz", "jazz-deep",
-      "optimus-prime", "prowl", "prowl-deep", "ratchet", "ratchet-deep",
+      "shockwave", "shockwave-deep", "skywarp", "skywarp-lite", "soundwave", "soundwave-deep",
+      "starscream", "thrust", "thrust-deep", "thundercracker", "thundercracker-deep",
     ]);
-    const optimus = bots.find((b) => b.name === "optimus-prime")!;
-    expect(optimus.tools?.[0]).toStartWith("Agent(bumblebee,");
-    expect(optimus.tools).toContain("AskUserQuestion");
-    expect(optimus.effort).toBe("low");
-    expect(optimus.frontmatter.memory).toBe("project");
-    expect(bots.find((b) => b.name === "prowl")!.frontmatter.disallowedTools).toBe("Agent, SendMessage");
+    const starscream = bots.find((b) => b.name === "starscream")!;
+    expect(starscream.tools?.[0]).toStartWith("Agent(skywarp,");
+    expect(starscream.tools).toContain("AskUserQuestion");
+    expect(starscream.effort).toBe("low");
+    expect(starscream.frontmatter.memory).toBe("project");
+    expect(bots.find((b) => b.name === "soundwave")!.frontmatter.disallowedTools).toBe("Agent, SendMessage");
   });
-  test("all five shared skills load", () => {
+  test("all six shared skills load", () => {
     expect(catalog.skills.map((s) => s.name)).toEqual([
-      "clean-code-review", "ddd-hexagonal", "pre-commit", "refactor", "repodoc-workflow",
+      "bot-avatar", "clean-code-review", "ddd-hexagonal", "pre-commit", "refactor", "repodoc-workflow",
     ]);
   });
-  test("claude adapter reproduces AUTOBOT.md verbatim", () => {
+  test("claude adapter reproduces BOT.md verbatim", () => {
     for (const b of bots) {
       const out = HARNESSES.claude.plan(b, "project", "/x").files[0].content;
-      expect(out).toBe(readFileSync(join(REPO, "autobots", b.name, "AUTOBOT.md"), "utf8"));
+      expect(out).toBe(readFileSync(join(REPO, "bots", b.name, "BOT.md"), "utf8"));
     }
   });
   test("codex adapter prescribes a Codex model per tier and passes effort through", () => {
@@ -174,53 +174,53 @@ describe("real autobots and skills", () => {
       expect(toml).toContain(`model_reasoning_effort = "${b.effort}"`);
       expect(toml).toContain(`yours is ${CODEX_MODELS[b.model!]} at ${b.effort} effort`);
     }
-    const prowl = HARNESSES.codex.plan(bots.find((b) => b.name === "prowl")!, "project", "/x").files[0].content;
-    expect(prowl).toContain('model = "gpt-6-astra"');
-    expect(prowl).toContain('sandbox_mode = "read-only"');
-    expect(HARNESSES.codex.plan(bots.find((b) => b.name === "bumblebee")!, "project", "/x").files[0].content).toContain('sandbox_mode = "workspace-write"');
+    const soundwave = HARNESSES.codex.plan(bots.find((b) => b.name === "soundwave")!, "project", "/x").files[0].content;
+    expect(soundwave).toContain('model = "gpt-6-astra"');
+    expect(soundwave).toContain('sandbox_mode = "read-only"');
+    expect(HARNESSES.codex.plan(bots.find((b) => b.name === "skywarp")!, "project", "/x").files[0].content).toContain('sandbox_mode = "workspace-write"');
   });
-  test("codex installs the dispatcher as a skill too, so $optimus-prime takes over the primary session", () => {
-    const optimus = bots.find((b) => b.name === "optimus-prime")!;
-    const plan = HARNESSES.codex.plan(optimus, "project", "/x");
-    expect(plan.dirs.map((d) => d.path)).toContain("/x/.agents/skills/optimus-prime");
+  test("codex installs the dispatcher as a skill too, so $starscream takes over the primary session", () => {
+    const starscream = bots.find((b) => b.name === "starscream")!;
+    const plan = HARNESSES.codex.plan(starscream, "project", "/x");
+    expect(plan.dirs.map((d) => d.path)).toContain("/x/.agents/skills/starscream");
     const skill = plan.dirs.at(-1)!.files[0].content;
-    expect(skill).toContain("name: optimus-prime");
+    expect(skill).toContain("name: starscream");
     expect(skill).not.toContain("claude --agent");
-    expect(HARNESSES.codex.ownedPaths(optimus, "project", "/x")).toContain("/x/.agents/skills/optimus-prime");
-    expect(HARNESSES.codex.plan(bots.find((b) => b.name === "bumblebee")!, "project", "/x").dirs).toHaveLength(0);
+    expect(HARNESSES.codex.ownedPaths(starscream, "project", "/x")).toContain("/x/.agents/skills/starscream");
+    expect(HARNESSES.codex.plan(bots.find((b) => b.name === "skywarp")!, "project", "/x").dirs).toHaveLength(0);
   });
 });
 
 describe("prompt adaptation", () => {
-  const optimus = catalog.autobots.find((b) => b.name === "optimus-prime")!;
-  const bumblebee = catalog.autobots.find((b) => b.name === "bumblebee")!;
+  const starscream = catalog.bots.find((b) => b.name === "starscream")!;
+  const skywarp = catalog.bots.find((b) => b.name === "skywarp")!;
 
   test("claude takes the prompt verbatim", () => {
-    expect(HARNESSES.claude.adaptPrompt(optimus)).toBe(optimus.prompt);
+    expect(HARNESSES.claude.adaptPrompt(starscream)).toBe(starscream.prompt);
   });
 
   for (const id of HARNESS_IDS.filter((h) => h !== "claude")) {
     test(`${id}: dispatcher and teammate get harness notes, no Claude launch command`, () => {
       const h = HARNESSES[id];
-      const lead = h.adaptPrompt(optimus);
+      const lead = h.adaptPrompt(starscream);
       expect(lead).toContain(`## Operating in ${h.label}`);
-      expect(lead).toContain("bumblebee, bumblebee-lite, ironhide");
+      expect(lead).toContain("skywarp, skywarp-lite, thundercracker");
       expect(lead).not.toContain("claude --agent");
       expect(lead).not.toContain("AskUserQuestion");
-      const dev = h.adaptPrompt(bumblebee);
+      const dev = h.adaptPrompt(skywarp);
       expect(dev).toContain(`## Operating in ${h.label}`);
       expect(dev).not.toContain("spawn_agent tool, naming");
-      expect(h.plan(optimus, "project", "/x").files[0].content).not.toContain("claude --agent");
+      expect(h.plan(starscream, "project", "/x").files[0].content).not.toContain("claude --agent");
     });
   }
 
-  test("AUTOBOT.<harness>.md overrides the generated prompt", () => {
+  test("BOT.<harness>.md overrides the generated prompt", () => {
     const tree = fixtureTree();
-    tree["autobots/optimus/AUTOBOT.codex.md"] = "---\ndescription: Codex flavour\n---\n\nHand-written for Codex.\n";
-    const [bot] = loadAutobots(tree);
+    tree["bots/starscream/BOT.codex.md"] = "---\ndescription: Codex flavour\n---\n\nHand-written for Codex.\n";
+    const [bot] = loadBots(tree);
     expect(HARNESSES.codex.adaptPrompt(bot)).toBe("Hand-written for Codex.");
     expect(HARNESSES.codex.plan(bot, "project", "/x").files[0].content).toContain("Codex flavour");
-    const [plain] = loadAutobots(fixtureTree());
+    const [plain] = loadBots(fixtureTree());
     expect(HARNESSES.codex.adaptPrompt(plain)).toContain("## Operating in Codex");
   });
 });
@@ -247,15 +247,82 @@ describe("bundle", () => {
   test("builds and runs over stdin with embedded content", () => {
     const build = Bun.spawnSync(["bun", "scripts/build.ts"], { cwd: REPO });
     expect(build.exitCode).toBe(0);
-    const bundle = readFileSync(join(REPO, "dist", "autobots.ts"));
+    const bundle = readFileSync(join(REPO, "dist", "bots.ts"));
     const cwd = mkdtempSync(join(tmpdir(), "bundle-"));
     const run = Bun.spawnSync(["bun", "run", "-", "install", "--all", "--scope", "project", "--harness", "claude"], { cwd, stdin: bundle });
     expect(run.exitCode).toBe(0);
-    expect(readFileSync(join(cwd, ".claude/agents/autobots/optimus-prime.md"), "utf8")).toBe(
-      readFileSync(join(REPO, "autobots/optimus-prime/AUTOBOT.md"), "utf8"),
+    expect(readFileSync(join(cwd, ".claude/agents/bots/starscream.md"), "utf8")).toBe(
+      readFileSync(join(REPO, "bots/starscream/BOT.md"), "utf8"),
     );
     expect(existsSync(join(cwd, ".claude/skills/pre-commit/SKILL.md"))).toBe(true);
     const ver = Bun.spawnSync(["bun", "run", "-", "--version"], { cwd, stdin: bundle });
-    expect(ver.stdout.toString()).toMatch(/^autobots \d+\.\d+\.\d+/);
+    expect(ver.stdout.toString()).toMatch(/^bots \d+\.\d+\.\d+/);
   });
+});
+
+describe("factions", () => {
+  test("loads the Aerialbots and shared specialists with valid dispatch targets", () => {
+    const originals = catalog.bots.filter((b) => b.faction === "autobots");
+    expect(originals).toHaveLength(11);
+    expect(originals.map((b) => b.name)).toEqual(["air-raid", "air-raid-lite", "fireflight", "fireflight-deep", "prowl", "prowl-deep", "ratchet", "ratchet-deep", "silverbolt", "skydive", "skydive-deep"]);
+    for (const bot of originals) {
+      expect(HARNESSES.claude.plan(bot, "project", "/x").files[0].content)
+        .toBe(readFileSync(join(REPO, "autobots", bot.name, "AUTOBOT.md"), "utf8"));
+    }
+    for (const name of ["silverbolt", "starscream"]) {
+      const lead = catalog.bots.find((b) => b.name === name)!;
+      const targets = lead.tools![0].slice(6, -1).split(",").map((s) => s.trim());
+      for (const target of targets) {
+        expect(catalog.bots.some((b) => b.name === target && b.faction === lead.faction)).toBe(true);
+      }
+      const prompt = HARNESSES.codex.adaptPrompt(lead);
+      expect(prompt).toContain(`Spawn the ${targets[0]} agent`);
+    }
+  });
+
+  for (const harness of HARNESS_IDS) {
+    test(`${harness}: choosing one faction preserves the other installed faction`, () => {
+      const cwd = mkdtempSync(join(tmpdir(), "factions-"));
+      const run = (...args: string[]) => Bun.spawnSync(["bun", join(REPO, "src/bin.ts"), ...args], { cwd });
+      for (const faction of ["autobots", "decepticons"]) {
+        expect(run("install", "--all", "--faction", faction, "--harness", harness, "--scope", "project").exitCode).toBe(0);
+      }
+      const h = HARNESSES[harness];
+      const optimus = botItem(catalog.bots.find((b) => b.name === "silverbolt")!);
+      const starscream = botItem(catalog.bots.find((b) => b.name === "starscream")!);
+      expect(status(optimus, h, "project", cwd)).toBe("installed");
+      expect(status(starscream, h, "project", cwd)).toBe("installed");
+      expect(Object.keys(readManifest(h, "project", cwd).items).filter((k) => k.startsWith("bot:"))).toHaveLength(22);
+      expect(run("uninstall", "--all", "--faction", "decepticons", "--harness", harness, "--scope", "project").exitCode).toBe(0);
+      expect(status(optimus, h, "project", cwd)).toBe("installed");
+      expect(status(starscream, h, "project", cwd)).toBe("missing");
+      expect(run("list", "--faction", "decepticons").stdout.toString()).not.toContain("silverbolt");
+      expect(run("list", "--faction", "invalid").exitCode).toBe(1);
+      expect(run("list", "--faction").exitCode).toBe(1);
+      expect(run("install", "silverbolt", "--faction", "decepticons", "--harness", harness, "--scope", "project").exitCode).toBe(1);
+    });
+  }
+});
+
+describe("Aerialbot upgrade", () => {
+  for (const harness of HARNESS_IDS) {
+    test(`${harness}: retires the old team while preserving Decepticons and dry-run state`, () => {
+      const cwd = mkdtempSync(join(tmpdir(), "aerialbots-upgrade-"));
+      const h = HARNESSES[harness];
+      const legacy = loadCatalog({
+        "autobots/optimus-prime/AUTOBOT.md": "---\nname: optimus-prime\ndescription: Previous lead\nmodel: fable\ntools: Agent(arcee), Read, Write\n---\nPrevious dispatcher.\n",
+        "autobots/arcee/AUTOBOT.md": "---\nname: arcee\ndescription: Previous UI specialist\nmodel: opus\ntools: Read, Write\n---\nPrevious designer.\n",
+      });
+      const starscream = catalog.bots.find((b) => b.name === "starscream")!;
+      install([...legacy.bots, starscream].map(botItem), h, { scope: "project", cwd, dryRun: false, version: "0.1.0" });
+      const manifestBefore = readFileSync(manifestPath(h, "project", cwd), "utf8");
+      const args = ["bun", join(REPO, "src/bin.ts"), "install", "--all", "--faction", "autobots", "--harness", harness, "--scope", "project"];
+      expect(Bun.spawnSync([...args, "--dry-run"], { cwd }).exitCode).toBe(0);
+      expect(readFileSync(manifestPath(h, "project", cwd), "utf8")).toBe(manifestBefore);
+      expect(Bun.spawnSync(args, { cwd }).exitCode).toBe(0);
+      for (const bot of legacy.bots) expect(status(botItem(bot), h, "project", cwd)).toBe("missing");
+      expect(status(botItem(starscream), h, "project", cwd)).toBe("installed");
+      expect(status(botItem(catalog.bots.find((b) => b.name === "silverbolt")!), h, "project", cwd)).toBe("installed");
+    });
+  }
 });

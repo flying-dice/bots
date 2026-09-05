@@ -47,4 +47,4 @@ sh(["git", "commit", "-m", `Release v${next}`]);
 sh(["git", "tag", "-a", `v${next}`, "-m", `v${next}`]);
 sh(["git", "push"]);
 sh(["git", "push", "origin", `v${next}`]);
-console.log(`tagged v${next}; the release workflow will publish dist/autobots.ts`);
+console.log(`tagged v${next}; the release workflow will publish dist/bots.ts`);

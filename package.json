@@ -1,16 +1,17 @@
 {
-  "name": "@flying-dice/autobots",
+  "name": "@flying-dice/bots",
   "version": "0.1.0",
-  "description": "Home of the Autobots agent team, and a CLI to install them into Claude Code, Codex, Antigravity and Pi.",
+  "description": "Choose your side: Autobot and Decepticon agent teams for Claude Code and Codex.",
   "type": "module",
   "bin": {
-    "autobots": "./src/bin.ts"
+    "bots": "./src/bin.ts"
   },
   "files": [
     "src",
-    "autobots",
+    "bots",
     "skills",
-    "README.md"
+    "README.md",
+    "autobots"
   ],
   "scripts": {
     "start": "bun src/bin.ts",

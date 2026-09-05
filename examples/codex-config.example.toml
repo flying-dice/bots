@@ -1,5 +1,5 @@
 # Drop into ~/.codex/config.toml (or .codex/config.toml in a trusted project).
-# Optimus dispatches from the primary session; one level of nesting is all the
+# Starscream dispatches from the primary session; one level of nesting is all the
 # team needs, and it keeps token use bounded.
 [agents]
 max_depth = 1

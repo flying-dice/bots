@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import { skillDirAt } from "../install.ts";
-import type { Autobot, Harness, HarnessId, PlannedDir, PromptStyle, Scope } from "../types.ts";
+import type { Bot, Harness, HarnessId, PlannedDir, PromptStyle, Scope } from "../types.ts";
 
 export interface HarnessSpec {
   id: HarnessId;
@@ -10,11 +10,11 @@ export interface HarnessSpec {
   /** Skills directory. Defaults to <scope root>/skills. */
   skillsRoot?(scope: Scope, cwd: string): string;
   /** Where the bot's main definition file goes, relative to the scope root. */
-  mainFile(bot: Autobot, scope: Scope): string;
+  mainFile(bot: Bot, scope: Scope): string;
   /** Serialise the bot for this harness. `bot` already carries the adapted description and prompt. */
-  render(bot: Autobot, prompt: string): string;
+  render(bot: Bot, prompt: string): string;
   /** Additional directories this harness owns for the bot, beyond its skills. */
-  extraDirs?(bot: Autobot, prompt: string, scope: Scope, cwd: string): PlannedDir[];
+  extraDirs?(bot: Bot, prompt: string, scope: Scope, cwd: string): PlannedDir[];
   /** Null means the harness shares Claude Code's format and takes the prompt verbatim. */
   style: PromptStyle | null;
 }
@@ -23,8 +23,8 @@ export interface HarnessSpec {
 export function defineHarness(spec: HarnessSpec): Harness {
   const root = (scope: Scope, cwd: string) => (scope === "user" ? spec.userRoot() : spec.projectRoot(cwd));
   const skillsRoot = spec.skillsRoot ?? ((scope, cwd) => join(root(scope, cwd), "skills"));
-  const mainPath = (bot: Autobot, scope: Scope, cwd: string) => join(root(scope, cwd), spec.mainFile(bot, scope));
-  const ownedDirs = (bot: Autobot, scope: Scope, cwd: string): PlannedDir[] => {
+  const mainPath = (bot: Bot, scope: Scope, cwd: string) => join(root(scope, cwd), spec.mainFile(bot, scope));
+  const ownedDirs = (bot: Bot, scope: Scope, cwd: string): PlannedDir[] => {
     const adapted = adapt(bot);
     return [
       ...bot.skills.map((s) => skillDirAt(s, join(skillsRoot(scope, cwd), s.name))),
@@ -39,7 +39,7 @@ export function defineHarness(spec: HarnessSpec): Harness {
     return text;
   };
 
-  const adaptPrompt = (bot: Autobot): string => {
+  const adaptPrompt = (bot: Bot): string => {
     const override = bot.overrides[spec.id];
     if (override) return override.body.trim();
     if (!spec.style) return bot.prompt;
@@ -49,7 +49,7 @@ export function defineHarness(spec: HarnessSpec): Harness {
   };
 
   /** The bot with description and prompt in this harness's vocabulary. */
-  const adapt = (bot: Autobot): Autobot => {
+  const adapt = (bot: Bot): Bot => {
     const override = bot.overrides[spec.id];
     const description = String(override?.data.description ?? rewrite(bot.description));
     return { ...bot, description, prompt: adaptPrompt(bot) };
@@ -84,12 +84,12 @@ export function commonRewrites(launch: (name: string) => string): PromptStyle["r
 }
 
 /** True when the bot is the one that dispatches others (has an Agent(...) allowlist). */
-export function isDispatcher(bot: Autobot): boolean {
+export function isDispatcher(bot: Bot): boolean {
   return (bot.tools ?? []).some((t) => t.startsWith("Agent("));
 }
 
 /** Names listed inside the bot's Agent(...) allowlist. */
-export function dispatchTargets(bot: Autobot): string[] {
+export function dispatchTargets(bot: Bot): string[] {
   const entry = (bot.tools ?? []).find((t) => t.startsWith("Agent("));
   return entry ? entry.slice("Agent(".length, -1).split(",").map((s) => s.trim()).filter(Boolean) : [];
 }

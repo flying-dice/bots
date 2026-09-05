@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, rmSync, writeFileSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import type { Autobot, Harness, PlannedDir, PlannedFile, Scope, Skill } from "./types.ts";
+import type { Bot, Harness, PlannedDir, PlannedFile, Scope, Skill } from "./types.ts";
 
 export interface Options {
   scope: Scope;
@@ -17,7 +17,7 @@ export type Status = "installed" | "partial" | "missing";
 /** Something the CLI can install: a bot or a shared skill, addressed by a stable key. */
 export type Item = { key: string; plan: (h: Harness, scope: Scope, cwd: string) => { files: PlannedFile[]; dirs: PlannedDir[] } };
 
-export function botItem(bot: Autobot): Item {
+export function botItem(bot: Bot): Item {
   return { key: `bot:${bot.name}`, plan: (h, scope, cwd) => h.plan(bot, scope, cwd) };
 }
 
@@ -31,7 +31,7 @@ export function skillItem(skill: Skill): Item {
 /**
  * Record of everything the CLI wrote for one harness and scope, so a later
  * version can remove paths it no longer produces. Lives at
- * <harness scope root>/autobots-manifest.json.
+ * <harness scope root>/bots-manifest.json.
  */
 export interface Manifest {
   version: string;
@@ -68,14 +68,14 @@ function writeManifest(harness: Harness, opts: Options, manifest: Manifest): voi
  * not in `items` is removed too, which is how `install --all` retires bots or
  * skills dropped in a newer version.
  */
-export function install(items: Item[], harness: Harness, opts: Options, pruneOthers = false): Map<string, Action[]> {
+export function install(items: Item[], harness: Harness, opts: Options, pruneOthers: boolean | ((key: string) => boolean) = false): Map<string, Action[]> {
   const manifest = readManifest(harness, opts.scope, opts.cwd);
   const out = new Map<string, Action[]>();
   const keep = new Set(items.map((i) => i.key));
 
   if (pruneOthers) {
     for (const key of Object.keys(manifest.items)) {
-      if (keep.has(key)) continue;
+      if (keep.has(key) || (typeof pruneOthers === "function" && !pruneOthers(key))) continue;
       out.set(key, removeAll(manifest.items[key], "prune", opts.dryRun));
       delete manifest.items[key];
     }

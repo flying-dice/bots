@@ -1,5 +1,7 @@
 export type HarnessId = "claude" | "codex";
 
+export type Faction = "autobots" | "decepticons";
+
 export type Scope = "user" | "project";
 
 /** A skill: SKILL.md plus any support files, keyed by path relative to the skill directory. */
@@ -17,8 +19,9 @@ export interface Doc {
   raw: string;
 }
 
-/** An Autobot as defined under autobots/<name>/. */
-export interface Autobot {
+/** An Bot as defined under bots/<name>/. */
+export interface Bot {
+  faction: Faction;
   name: string;
   description: string;
   /** Preferred model hint, e.g. "opus", "sonnet". Harnesses that support it use it. */
@@ -31,18 +34,18 @@ export interface Autobot {
   effort?: string;
   /** Every frontmatter key as parsed, including harness-specific ones (memory, disallowedTools, ...). */
   frontmatter: Record<string, unknown>;
-  /** The frontmatter block exactly as written in AUTOBOT.md, for harnesses that share the format. */
+  /** The frontmatter block exactly as written in BOT.md, for harnesses that share the format. */
   rawFrontmatter: string;
   /** The persona body (markdown, no frontmatter), as written for Claude Code. */
   prompt: string;
   skills: Skill[];
-  /** Hand-written per-harness replacements from AUTOBOT.<harness>.md, when present. */
+  /** Hand-written per-harness replacements from BOT.<harness>.md, when present. */
   overrides: Partial<Record<HarnessId, Doc>>;
 }
 
 /** Everything the CLI can install: the team and the shared skills. */
 export interface Catalog {
-  autobots: Autobot[];
+  bots: Bot[];
   skills: Skill[];
 }
 
@@ -69,7 +72,7 @@ export interface PromptStyle {
   /** Substitutions applied to the body, in order. */
   rewrites: Array<[from: RegExp, to: string | ((match: string, ...groups: string[]) => string)]>;
   /** Extra section appended to the body describing how the team works in this harness. */
-  notes(bot: Autobot): string;
+  notes(bot: Bot): string;
 }
 
 export interface Harness {
@@ -81,10 +84,10 @@ export interface Harness {
   projectRoot(cwd: string): string;
   /** Directory that holds skills (one subdirectory per skill) for the given scope. */
   skillsRoot(scope: Scope, cwd: string): string;
-  /** Files/dirs to write when installing an Autobot. */
-  plan(bot: Autobot, scope: Scope, cwd: string): InstallPlan;
+  /** Files/dirs to write when installing an Bot. */
+  plan(bot: Bot, scope: Scope, cwd: string): InstallPlan;
   /** Every path this harness owns for a bot (used for uninstall/status). */
-  ownedPaths(bot: Autobot, scope: Scope, cwd: string): string[];
+  ownedPaths(bot: Bot, scope: Scope, cwd: string): string[];
   /** The persona body as this harness will receive it. */
-  adaptPrompt(bot: Autobot): string;
+  adaptPrompt(bot: Bot): string;
 }
