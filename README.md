@@ -86,7 +86,7 @@ Project-scoped Codex definitions require a trusted project.
 | Command | Purpose |
 | --- | --- |
 | `list` | List bots with faction labels |
-| `skills` | List the five shared skills |
+| `skills` | List the shared skills |
 | `show <bot>` | Show a persona |
 | `harnesses` | Show supported harness paths |
 | `doctor` | Check whether user configuration directories exist |
@@ -100,7 +100,7 @@ include `cc` and `openai`. `--dry-run` previews changes without writes.
 `--skills` includes shared skills without selecting all bots.
 
 The shared skills are `bot-avatar`, `pre-commit`, `clean-code-review`, `refactor`,
-`ddd-hexagonal`, and `repodoc-workflow`.
+`ddd-hexagonal`, `repodoc-workflow`, and `cross-review`.
 
 ## Files and adapters
 

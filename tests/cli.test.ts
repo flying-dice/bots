@@ -154,9 +154,9 @@ describe("real bots and skills", () => {
     expect(starscream.frontmatter.memory).toBe("project");
     expect(bots.find((b) => b.name === "soundwave")!.frontmatter.disallowedTools).toBe("Agent, SendMessage");
   });
-  test("all six shared skills load", () => {
+  test("all seven shared skills load", () => {
     expect(catalog.skills.map((s) => s.name)).toEqual([
-      "bot-avatar", "clean-code-review", "ddd-hexagonal", "pre-commit", "refactor", "repodoc-workflow",
+      "bot-avatar", "clean-code-review", "cross-review", "ddd-hexagonal", "pre-commit", "refactor", "repodoc-workflow",
     ]);
   });
   test("claude adapter reproduces BOT.md verbatim", () => {
