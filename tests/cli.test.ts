@@ -156,7 +156,7 @@ describe("real bots and skills", () => {
   });
   test("all seven shared skills load", () => {
     expect(catalog.skills.map((s) => s.name)).toEqual([
-      "bot-avatar", "clean-code-review", "cross-review", "ddd-hexagonal", "pre-commit", "refactor", "repodoc-workflow",
+      "clean-code-review", "ddd-hexagonal", "frontier-review", "pre-commit", "project-status", "refactor", "repodoc-workflow",
     ]);
   });
   test("claude adapter reproduces BOT.md verbatim", () => {

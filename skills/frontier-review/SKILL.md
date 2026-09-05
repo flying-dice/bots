@@ -1,9 +1,9 @@
 ---
-name: cross-review
+name: frontier-review
 description: Multi-model code review on a Ticket or MR using external agent CLIs (Antigravity, OpenAI Codex, Claude Code). Tech Lead review for technical work, Design Lead review for UI/UX work.
 ---
 
-# cross-review
+# frontier-review
 
 Delegate code reviews to external agent harnesses (**Google Antigravity**, **OpenAI Codex**, and **Claude Code**).
 

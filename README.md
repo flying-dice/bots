@@ -99,14 +99,15 @@ Install, uninstall, and status require both `--harness claude|codex|all` and
 include `cc` and `openai`. `--dry-run` previews changes without writes.
 `--skills` includes shared skills without selecting all bots.
 
-The shared skills are `bot-avatar`, `pre-commit`, `clean-code-review`, `refactor`,
-`ddd-hexagonal`, `repodoc-workflow`, and `cross-review`.
+The shared skills are `project-status`, `pre-commit`, `clean-code-review`, `refactor`,
+`ddd-hexagonal`, `repodoc-workflow`, and `frontier-review`.
 
 ## Files and adapters
 
 - Autobot personas: `autobots/<name>/AUTOBOT.md`.
 - Decepticon personas: `decepticons/<name>/BOT.md`.
 - Shared skills: `skills/<name>/SKILL.md`.
+- Project-only avatar skill: `.agents/skills/bot-avatar/SKILL.md` (not shipped by the installer).
 - Optional prompt overrides: `AUTOBOT.codex.md` or `BOT.codex.md` beside the definition.
 - Claude agents: `.claude/agents/autobots/` or `.claude/agents/bots/`.
 - Codex agents: `.codex/agents/`; skills: `.agents/skills/`.
