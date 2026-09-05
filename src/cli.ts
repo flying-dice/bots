@@ -118,7 +118,7 @@ export function main(argv: string[], rt: Runtime) {
   switch (args.cmd) {
     case "list": {
       if (bots.length === 0) {
-        console.log("No Bots found in bots/. Add a directory with an BOT.md to get started.");
+        console.log("No bots found. Add a persona under autobots/ or decepticons/ to get started.");
         return;
       }
       const w = Math.max(...bots.map((b) => b.name.length));

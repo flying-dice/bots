@@ -23,7 +23,7 @@ outside the development team. Future teams can use the same specialists; no
 second team is defined yet. Their software roles are adaptations of the characters.
 
 The [Autobot definitions](autobots/README.md) and new
-[Decepticon definitions](bots/README.md) are separate. The existing Seekers runtime
+[Decepticon definitions](decepticons/README.md) are separate. The existing Seekers runtime
 repository is not required or modified.
 
 The Aerialbots comprise Silverbolt, Skydive, Air Raid, and Fireflight. **Prowl**
@@ -105,7 +105,7 @@ The shared skills are `bot-avatar`, `pre-commit`, `clean-code-review`, `refactor
 ## Files and adapters
 
 - Autobot personas: `autobots/<name>/AUTOBOT.md`.
-- Decepticon personas: `bots/<name>/BOT.md`.
+- Decepticon personas: `decepticons/<name>/BOT.md`.
 - Shared skills: `skills/<name>/SKILL.md`.
 - Optional prompt overrides: `AUTOBOT.codex.md` or `BOT.codex.md` beside the definition.
 - Claude agents: `.claude/agents/autobots/` or `.claude/agents/bots/`.

@@ -73,4 +73,4 @@ A cohesive team avatar portrait of [Character Name] from Transformers. Modern 3D
 ## File Conventions
 
 - Save generated square portraits to `assets/avatars/<bot-name>.jpg` using kebab-case (e.g. `air-raid.jpg`, `starscream.jpg`).
-- Reference avatars in `assets/README.md` and the faction READMEs (`autobots/README.md`, `bots/README.md`).
+- Reference avatars in `assets/README.md` and the faction READMEs (`autobots/README.md`, `decepticons/README.md`).

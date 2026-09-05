@@ -13,10 +13,10 @@ const catalog = loadCatalog(readTree(REPO));
 
 function fixtureTree(): Tree {
   return {
-    "bots/starscream/BOT.md": `---\nname: starscream\ndescription: Leads the team\nmodel: opus\ntools: [Read, Bash]\n---\n\nYou are Starscream.\n`,
-    "bots/starscream/skills/roll-out/SKILL.md": "---\nname: roll-out\ndescription: Go\n---\nGo.\n",
-    "bots/starscream/skills/roll-out/ref/notes.md": "extra file",
-    "bots/_ignored/BOT.md": "---\nname: nope\n---\n",
+    "decepticons/starscream/BOT.md": `---\nname: starscream\ndescription: Leads the team\nmodel: opus\ntools: [Read, Bash]\n---\n\nYou are Starscream.\n`,
+    "decepticons/starscream/skills/roll-out/SKILL.md": "---\nname: roll-out\ndescription: Go\n---\nGo.\n",
+    "decepticons/starscream/skills/roll-out/ref/notes.md": "extra file",
+    "decepticons/_ignored/BOT.md": "---\nname: nope\n---\n",
     "skills/shared-one/SKILL.md": "---\nname: shared-one\ndescription: Shared\n---\nShared.\n",
   };
 }
@@ -36,7 +36,7 @@ describe("frontmatter", () => {
 describe("tree", () => {
   test("readTree matches the on-disk files and children() groups them", () => {
     const tree = readTree(REPO);
-    expect(tree["bots/starscream/BOT.md"]).toBe(readFileSync(join(REPO, "bots/starscream/BOT.md"), "utf8"));
+    expect(tree["decepticons/starscream/BOT.md"]).toBe(readFileSync(join(REPO, "decepticons/starscream/BOT.md"), "utf8"));
     expect([...children(tree, "skills").keys()].sort()).toEqual(catalog.skills.map((s) => s.name));
   });
 });
@@ -117,10 +117,10 @@ describe("harnesses", () => {
     // v2: the shared skill is gone, the bot's skill was renamed, a new bot appeared.
     const tree = fixtureTree();
     delete tree["skills/shared-one/SKILL.md"];
-    delete tree["bots/starscream/skills/roll-out/SKILL.md"];
-    delete tree["bots/starscream/skills/roll-out/ref/notes.md"];
-    tree["bots/starscream/skills/transform/SKILL.md"] = "---\nname: transform\n---\nGo.\n";
-    tree["bots/skywarp/BOT.md"] = "---\nname: skywarp\ndescription: Dev\n---\n\nBee.\n";
+    delete tree["decepticons/starscream/skills/roll-out/SKILL.md"];
+    delete tree["decepticons/starscream/skills/roll-out/ref/notes.md"];
+    tree["decepticons/starscream/skills/transform/SKILL.md"] = "---\nname: transform\n---\nGo.\n";
+    tree["decepticons/skywarp/BOT.md"] = "---\nname: skywarp\ndescription: Dev\n---\n\nBee.\n";
     const v2 = loadCatalog(tree);
     const results = install([...v2.skills.map(skillItem), ...v2.bots.map(botItem)], h, { ...opts(cwd), version: "2.0.0" }, true);
 
@@ -162,7 +162,7 @@ describe("real bots and skills", () => {
   test("claude adapter reproduces BOT.md verbatim", () => {
     for (const b of bots) {
       const out = HARNESSES.claude.plan(b, "project", "/x").files[0].content;
-      expect(out).toBe(readFileSync(join(REPO, "bots", b.name, "BOT.md"), "utf8"));
+      expect(out).toBe(readFileSync(join(REPO, "decepticons", b.name, "BOT.md"), "utf8"));
     }
   });
   test("codex adapter prescribes a Codex model per tier and passes effort through", () => {
@@ -216,7 +216,7 @@ describe("prompt adaptation", () => {
 
   test("BOT.<harness>.md overrides the generated prompt", () => {
     const tree = fixtureTree();
-    tree["bots/starscream/BOT.codex.md"] = "---\ndescription: Codex flavour\n---\n\nHand-written for Codex.\n";
+    tree["decepticons/starscream/BOT.codex.md"] = "---\ndescription: Codex flavour\n---\n\nHand-written for Codex.\n";
     const [bot] = loadBots(tree);
     expect(HARNESSES.codex.adaptPrompt(bot)).toBe("Hand-written for Codex.");
     expect(HARNESSES.codex.plan(bot, "project", "/x").files[0].content).toContain("Codex flavour");
@@ -252,7 +252,7 @@ describe("bundle", () => {
     const run = Bun.spawnSync(["bun", "run", "-", "install", "--all", "--scope", "project", "--harness", "claude"], { cwd, stdin: bundle });
     expect(run.exitCode).toBe(0);
     expect(readFileSync(join(cwd, ".claude/agents/bots/starscream.md"), "utf8")).toBe(
-      readFileSync(join(REPO, "bots/starscream/BOT.md"), "utf8"),
+      readFileSync(join(REPO, "decepticons/starscream/BOT.md"), "utf8"),
     );
     expect(existsSync(join(cwd, ".claude/skills/pre-commit/SKILL.md"))).toBe(true);
     const ver = Bun.spawnSync(["bun", "run", "-", "--version"], { cwd, stdin: bundle });

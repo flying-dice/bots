@@ -16,7 +16,7 @@ export function loadCatalog(tree: Tree): Catalog {
 
 export function loadBots(tree: Tree): Bot[] {
   const bots: Bot[] = [];
-  for (const [folder, faction] of [["autobots", "autobots"], ["bots", "decepticons"]] as const) {
+  for (const [folder, faction] of [["autobots", "autobots"], ["decepticons", "decepticons"]] as const) {
     for (const [name, files] of children(tree, folder)) {
       if (name.startsWith("_") || name.startsWith(".")) continue;
       const bot = loadBot(name, files, faction);

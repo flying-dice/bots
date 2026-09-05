@@ -19,7 +19,7 @@ export interface Doc {
   raw: string;
 }
 
-/** An Bot as defined under bots/<name>/. */
+/** A bot defined under autobots/<name>/ or decepticons/<name>/. */
 export interface Bot {
   faction: Faction;
   name: string;
