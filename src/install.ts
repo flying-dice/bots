@@ -40,11 +40,16 @@ export interface Manifest {
 }
 
 export function manifestPath(harness: Harness, scope: Scope, cwd: string): string {
-  return join(scope === "user" ? harness.userRoot() : harness.projectRoot(cwd), "autobots-manifest.json");
+  return join(scope === "user" ? harness.userRoot() : harness.projectRoot(cwd), "bots-manifest.json");
+}
+
+function legacyManifestPath(harness: Harness, scope: Scope, cwd: string): string {
+  return join(dirname(manifestPath(harness, scope, cwd)), "autobots-manifest.json");
 }
 
 export function readManifest(harness: Harness, scope: Scope, cwd: string): Manifest {
-  const p = manifestPath(harness, scope, cwd);
+  const current = manifestPath(harness, scope, cwd);
+  const p = existsSync(current) ? current : legacyManifestPath(harness, scope, cwd);
   if (!existsSync(p)) return { version: "", updatedAt: "", items: {} };
   try {
     const m = JSON.parse(readFileSync(p, "utf8")) as Partial<Manifest>;
@@ -60,6 +65,7 @@ function writeManifest(harness: Harness, opts: Options, manifest: Manifest): voi
   mkdirSync(dirname(p), { recursive: true });
   const out: Manifest = { version: opts.version, updatedAt: new Date().toISOString(), items: sortKeys(manifest.items) };
   writeFileSync(p, JSON.stringify(out, null, 2) + "\n");
+  rmSync(legacyManifestPath(harness, opts.scope, opts.cwd), { force: true });
 }
 
 /**

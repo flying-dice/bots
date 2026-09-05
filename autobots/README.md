@@ -20,7 +20,7 @@ Install with `bots install --all --faction autobots --harness claude --scope use
 or choose `codex`. Start with `claude --agent silverbolt` or `$silverbolt` in Codex.
 The Claude project-default example selects Silverbolt.
 
-Plans live under `docs/autobots/`. Only the primary team lead dispatches agents.
+Plans live under `docs/bots/`. Only the primary team lead dispatches agents.
 Prowl and Fireflight deep variants require the written justification described
 in Silverbolt's definition.
 

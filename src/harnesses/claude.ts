@@ -12,7 +12,7 @@ export const claude = defineHarness({
   label: "Claude Code",
   userRoot: () => join(homedir(), ".claude"),
   projectRoot: (cwd) => join(cwd, ".claude"),
-  mainFile: (bot) => join("agents", bot.faction === "autobots" ? "autobots" : "bots", `${bot.name}.md`),
+  mainFile: (bot) => join("agents", "bots", `${bot.name}.md`),
   render: (bot, prompt) => `---\n${bot.rawFrontmatter}\n---\n\n${prompt}\n`,
   style: null,
 });

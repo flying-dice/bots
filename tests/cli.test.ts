@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { mkdtempSync, existsSync, readFileSync, mkdirSync, writeFileSync } from "node:fs";
+import { mkdtempSync, existsSync, readFileSync, mkdirSync, writeFileSync, renameSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
 import { parseFrontmatter, stringifyFrontmatter } from "../src/frontmatter.ts";
@@ -305,6 +305,63 @@ describe("factions", () => {
 });
 
 describe("Aerialbot upgrade", () => {
+  for (const id of HARNESS_IDS) {
+    test(`${id}: migrates legacy manifests without losing another faction's ownership`, () => {
+      const cwd = mkdtempSync(join(tmpdir(), "manifest-migration-"));
+      const h = HARNESSES[id];
+      const opts = { scope: "project" as const, cwd, dryRun: false, version: "0.1.0" };
+      const other = botItem(catalog.bots.find((b) => b.name === "starscream")!);
+      const added = botItem(catalog.bots.find((b) => b.name === "silverbolt")!);
+      install([other], h, opts);
+      const current = manifestPath(h, "project", cwd);
+      expect(current).toBe(join(h.projectRoot(cwd), "bots-manifest.json"));
+      const legacy = join(h.projectRoot(cwd), "autobots-manifest.json");
+      renameSync(current, legacy);
+      const before = readFileSync(legacy, "utf8");
+      expect(status(other, h, "project", cwd)).toBe("installed");
+      install([added], h, { ...opts, dryRun: true });
+      expect(existsSync(current)).toBe(false);
+      expect(readFileSync(legacy, "utf8")).toBe(before);
+      install([added], h, opts);
+      expect(existsSync(legacy)).toBe(false);
+      expect(status(other, h, "project", cwd)).toBe("installed");
+      expect(status(added, h, "project", cwd)).toBe("installed");
+      renameSync(current, legacy);
+      uninstall([added], h, opts);
+      expect(existsSync(legacy)).toBe(false);
+      expect(status(other, h, "project", cwd)).toBe("installed");
+      expect(status(added, h, "project", cwd)).toBe("missing");
+    });
+  }
+
+  test("Claude moves recorded Autobot agents into bots without disturbing other files", () => {
+    const cwd = mkdtempSync(join(tmpdir(), "claude-agent-move-"));
+    const h = HARNESSES.claude;
+    const bot = catalog.bots.find((b) => b.name === "silverbolt")!;
+    const starscream = botItem(catalog.bots.find((b) => b.name === "starscream")!);
+    const oldPath = join(cwd, ".claude/agents/autobots/silverbolt.md");
+    const newPath = join(cwd, ".claude/agents/bots/silverbolt.md");
+    const opts = { scope: "project" as const, cwd, dryRun: false, version: "0.1.0" };
+    install([
+      { key: "bot:silverbolt", plan: () => ({ files: [{ path: oldPath, content: "Old agent" }], dirs: [] }) },
+      starscream,
+    ], h, opts);
+    const unrelated = join(cwd, ".claude/agents/autobots/custom.md");
+    writeFileSync(unrelated, "User agent");
+    const manifestBefore = readFileSync(manifestPath(h, "project", cwd), "utf8");
+    install([botItem(bot)], h, { ...opts, dryRun: true });
+    expect(existsSync(oldPath)).toBe(true);
+    expect(existsSync(newPath)).toBe(false);
+    expect(readFileSync(manifestPath(h, "project", cwd), "utf8")).toBe(manifestBefore);
+    install([botItem(bot)], h, opts);
+    expect(existsSync(oldPath)).toBe(false);
+    expect(readFileSync(newPath, "utf8")).toContain("# Silverbolt");
+    expect(readFileSync(unrelated, "utf8")).toBe("User agent");
+    expect(status(starscream, h, "project", cwd)).toBe("installed");
+    expect(readManifest(h, "project", cwd).items["bot:silverbolt"]).toContain(newPath);
+    expect(readManifest(h, "project", cwd).items["bot:silverbolt"]).not.toContain(oldPath);
+  });
+
   for (const harness of HARNESS_IDS) {
     test(`${harness}: retires the old team while preserving Decepticons and dry-run state`, () => {
       const cwd = mkdtempSync(join(tmpdir(), "aerialbots-upgrade-"));

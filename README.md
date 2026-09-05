@@ -109,7 +109,7 @@ The shared skills are `project-status`, `pre-commit`, `clean-code-review`, `refa
 - Shared skills: `skills/<name>/SKILL.md`.
 - Project-only avatar skill: `.agents/skills/bot-avatar/SKILL.md` (not shipped by the installer).
 - Optional prompt overrides: `AUTOBOT.codex.md` or `BOT.codex.md` beside the definition.
-- Claude agents: `.claude/agents/autobots/` or `.claude/agents/bots/`.
+- Claude agents (both factions): `.claude/agents/bots/`.
 - Codex agents: `.codex/agents/`; skills: `.agents/skills/`.
 - Claude skills: `.claude/skills/`.
 
@@ -125,8 +125,10 @@ starting with `_` are ignored. Harness adapters live in `src/harnesses/`;
 
 ## Ownership and upgrades
 
-The existing `autobots-manifest.json` filename is deliberately retained under
-each harness root so earlier installations remain tracked. Reinstalling an item
+The `bots-manifest.json` file under each harness root tracks installed paths.
+Legacy manifests are read and migrated on the next install or uninstall;
+recorded Autobot agent paths move into `agents/bots/` when reinstalled.
+Reinstalling an item
 removes paths it previously owned but no longer produces. Skill directories are
 replaced wholesale.
 
