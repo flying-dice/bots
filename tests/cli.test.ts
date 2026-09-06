@@ -36,7 +36,7 @@ describe("frontmatter", () => {
 describe("tree", () => {
   test("readTree matches the on-disk files and children() groups them", () => {
     const tree = readTree(REPO);
-    expect(tree["decepticons/starscream/BOT.md"]).toBe(readFileSync(join(REPO, "decepticons/starscream/BOT.md"), "utf8"));
+    expect(tree["roles/lead/BOT.md"]).toBe(readFileSync(join(REPO, "roles/lead/BOT.md"), "utf8"));
     expect([...children(tree, "skills").keys()].sort()).toEqual(catalog.skills.map((s) => s.name));
   });
 });
@@ -94,6 +94,18 @@ describe("harnesses", () => {
       uninstall([item], h, opts(cwd));
       expect(status(item, h, "project", cwd)).toBe("missing");
     });
+
+    test(`${id}: coding styleguide installs every language reference`, () => {
+      const cwd = mkdtempSync(join(tmpdir(), "styleguide-"));
+      const h = HARNESSES[id];
+      const skill = catalog.skills.find((s) => s.name === "coding-styleguide")!;
+      install([skillItem(skill)], h, opts(cwd));
+      for (const language of ["rust", "typescript", "javascript", "go", "lua", "python"]) {
+        const relative = `references/${language}.md`;
+        expect(readFileSync(join(h.skillsRoot("project", cwd), skill.name, relative), "utf8"))
+          .toBe(skill.files[relative]);
+      }
+    });
   }
 
   test("dry run touches nothing, not even the manifest", () => {
@@ -141,7 +153,7 @@ describe("harnesses", () => {
 });
 
 describe("real bots and skills", () => {
-  const bots = catalog.bots.filter((b) => b.faction === "decepticons");
+  const bots = catalog.bots.filter((b) => b.variant === "decepticons");
   test("all eleven load with Claude-specific frontmatter intact", () => {
     expect(bots.map((b) => b.name)).toEqual([
       "shockwave", "shockwave-deep", "skywarp", "skywarp-lite", "soundwave", "soundwave-deep",
@@ -154,15 +166,16 @@ describe("real bots and skills", () => {
     expect(starscream.frontmatter.memory).toBe("project");
     expect(bots.find((b) => b.name === "soundwave")!.frontmatter.disallowedTools).toBe("Agent, SendMessage");
   });
-  test("all seven shared skills load", () => {
+  test("all twelve shared skills load", () => {
     expect(catalog.skills.map((s) => s.name)).toEqual([
-      "clean-code-review", "ddd-hexagonal", "frontier-review", "pre-commit", "project-status", "refactor", "repodoc-workflow",
+      "antigravity-harness", "claude-harness", "clean-code-review", "codex-harness", "coding-styleguide", "pre-commit", "project-status", "refactor", "repodoc-workflow", "requirements-review", "sprint-plan", "sprint-start",
     ]);
   });
   test("claude adapter reproduces BOT.md verbatim", () => {
     for (const b of bots) {
       const out = HARNESSES.claude.plan(b, "project", "/x").files[0].content;
-      expect(out).toBe(readFileSync(join(REPO, "decepticons", b.name, "BOT.md"), "utf8"));
+      expect(parseFrontmatter(out).body.trim()).toBe(b.prompt);
+      expect(parseFrontmatter(out).data.name).toBe(b.name);
     }
   });
   test("codex adapter prescribes a Codex model per tier and passes effort through", () => {
@@ -249,10 +262,10 @@ describe("bundle", () => {
     expect(build.exitCode).toBe(0);
     const bundle = readFileSync(join(REPO, "dist", "bots.ts"));
     const cwd = mkdtempSync(join(tmpdir(), "bundle-"));
-    const run = Bun.spawnSync(["bun", "run", "-", "install", "--all", "--scope", "project", "--harness", "claude"], { cwd, stdin: bundle });
+    const run = Bun.spawnSync(["bun", "run", "-", "install", "--all", "--variant", "decepticons", "--scope", "project", "--harness", "claude"], { cwd, stdin: bundle });
     expect(run.exitCode).toBe(0);
     expect(readFileSync(join(cwd, ".claude/agents/bots/starscream.md"), "utf8")).toBe(
-      readFileSync(join(REPO, "decepticons/starscream/BOT.md"), "utf8"),
+      HARNESSES.claude.plan(catalog.bots.find((b) => b.name === "starscream")!, "project", cwd).files[0].content,
     );
     expect(existsSync(join(cwd, ".claude/skills/pre-commit/SKILL.md"))).toBe(true);
     const ver = Bun.spawnSync(["bun", "run", "-", "--version"], { cwd, stdin: bundle });
@@ -262,18 +275,17 @@ describe("bundle", () => {
 
 describe("factions", () => {
   test("loads the Aerialbots and shared specialists with valid dispatch targets", () => {
-    const originals = catalog.bots.filter((b) => b.faction === "autobots");
+    const originals = catalog.bots.filter((b) => b.variant === "autobots");
     expect(originals).toHaveLength(11);
     expect(originals.map((b) => b.name)).toEqual(["air-raid", "air-raid-lite", "fireflight", "fireflight-deep", "prowl", "prowl-deep", "ratchet", "ratchet-deep", "silverbolt", "skydive", "skydive-deep"]);
     for (const bot of originals) {
-      expect(HARNESSES.claude.plan(bot, "project", "/x").files[0].content)
-        .toBe(readFileSync(join(REPO, "autobots", bot.name, "AUTOBOT.md"), "utf8"));
+      expect(parseFrontmatter(HARNESSES.claude.plan(bot, "project", "/x").files[0].content).body.trim()).toBe(bot.prompt);
     }
     for (const name of ["silverbolt", "starscream"]) {
       const lead = catalog.bots.find((b) => b.name === name)!;
       const targets = lead.tools![0].slice(6, -1).split(",").map((s) => s.trim());
       for (const target of targets) {
-        expect(catalog.bots.some((b) => b.name === target && b.faction === lead.faction)).toBe(true);
+        expect(catalog.bots.some((b) => b.name === target && b.variant === lead.variant)).toBe(true);
       }
       const prompt = HARNESSES.codex.adaptPrompt(lead);
       expect(prompt).toContain(`Spawn the ${targets[0]} agent`);
@@ -281,25 +293,29 @@ describe("factions", () => {
   });
 
   for (const harness of HARNESS_IDS) {
-    test(`${harness}: choosing one faction preserves the other installed faction`, () => {
+    test(`${harness}: selecting a variant replaces the installed roster`, () => {
       const cwd = mkdtempSync(join(tmpdir(), "factions-"));
       const run = (...args: string[]) => Bun.spawnSync(["bun", join(REPO, "src/bin.ts"), ...args], { cwd });
       for (const faction of ["autobots", "decepticons"]) {
-        expect(run("install", "--all", "--faction", faction, "--harness", harness, "--scope", "project").exitCode).toBe(0);
+        expect(run("install", "--all", "--variant", faction, "--harness", harness, "--scope", "project").exitCode).toBe(0);
       }
       const h = HARNESSES[harness];
       const optimus = botItem(catalog.bots.find((b) => b.name === "silverbolt")!);
       const starscream = botItem(catalog.bots.find((b) => b.name === "starscream")!);
-      expect(status(optimus, h, "project", cwd)).toBe("installed");
+      expect(status(optimus, h, "project", cwd)).toBe("missing");
       expect(status(starscream, h, "project", cwd)).toBe("installed");
-      expect(Object.keys(readManifest(h, "project", cwd).items).filter((k) => k.startsWith("bot:"))).toHaveLength(22);
-      expect(run("uninstall", "--all", "--faction", "decepticons", "--harness", harness, "--scope", "project").exitCode).toBe(0);
-      expect(status(optimus, h, "project", cwd)).toBe("installed");
+      expect(Object.keys(readManifest(h, "project", cwd).items).filter((k) => k.startsWith("bot:"))).toHaveLength(11);
+      expect(readManifest(h, "project", cwd).variant).toBe("decepticons");
+      expect(run("install", "--all", "--harness", harness, "--scope", "project").exitCode).toBe(0);
+      expect(readManifest(h, "project", cwd).variant).toBe("decepticons");
+      expect(run("uninstall", "--all", "--harness", harness, "--scope", "project").exitCode).toBe(0);
+      expect(status(optimus, h, "project", cwd)).toBe("missing");
       expect(status(starscream, h, "project", cwd)).toBe("missing");
-      expect(run("list", "--faction", "decepticons").stdout.toString()).not.toContain("silverbolt");
-      expect(run("list", "--faction", "invalid").exitCode).toBe(1);
-      expect(run("list", "--faction").exitCode).toBe(1);
-      expect(run("install", "silverbolt", "--faction", "decepticons", "--harness", harness, "--scope", "project").exitCode).toBe(1);
+      expect(run("list", "--variant", "decepticons").stdout.toString()).not.toContain("silverbolt");
+      expect(run("list", "--variant", "invalid").exitCode).toBe(1);
+      expect(run("list", "--variant").exitCode).toBe(1);
+      expect(run("list", "--faction", "decepticons").exitCode).toBe(1);
+      expect(run("install", "silverbolt", "--variant", "decepticons", "--harness", harness, "--scope", "project").exitCode).toBe(1);
     });
   }
 });
@@ -363,7 +379,7 @@ describe("Aerialbot upgrade", () => {
   });
 
   for (const harness of HARNESS_IDS) {
-    test(`${harness}: retires the old team while preserving Decepticons and dry-run state`, () => {
+    test(`${harness}: replaces a legacy mixed roster and preserves dry-run state`, () => {
       const cwd = mkdtempSync(join(tmpdir(), "aerialbots-upgrade-"));
       const h = HARNESSES[harness];
       const legacy = loadCatalog({
@@ -373,12 +389,12 @@ describe("Aerialbot upgrade", () => {
       const starscream = catalog.bots.find((b) => b.name === "starscream")!;
       install([...legacy.bots, starscream].map(botItem), h, { scope: "project", cwd, dryRun: false, version: "0.1.0" });
       const manifestBefore = readFileSync(manifestPath(h, "project", cwd), "utf8");
-      const args = ["bun", join(REPO, "src/bin.ts"), "install", "--all", "--faction", "autobots", "--harness", harness, "--scope", "project"];
+      const args = ["bun", join(REPO, "src/bin.ts"), "install", "--all", "--variant", "autobots", "--harness", harness, "--scope", "project"];
       expect(Bun.spawnSync([...args, "--dry-run"], { cwd }).exitCode).toBe(0);
       expect(readFileSync(manifestPath(h, "project", cwd), "utf8")).toBe(manifestBefore);
       expect(Bun.spawnSync(args, { cwd }).exitCode).toBe(0);
       for (const bot of legacy.bots) expect(status(botItem(bot), h, "project", cwd)).toBe("missing");
-      expect(status(botItem(starscream), h, "project", cwd)).toBe("installed");
+      expect(status(botItem(starscream), h, "project", cwd)).toBe("missing");
       expect(status(botItem(catalog.bots.find((b) => b.name === "silverbolt")!), h, "project", cwd)).toBe("installed");
     });
   }

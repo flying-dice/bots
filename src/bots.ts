@@ -1,11 +1,6 @@
 import { parseFrontmatter, splitTopLevel } from "./frontmatter.ts";
 import { children, type Tree } from "./tree.ts";
-import type { Bot, Catalog, Doc, Faction, HarnessId, Skill } from "./types.ts";
-
-/** Superseded names removed from active installs on upgrade; definitions live in Git history. */
-export const RETIRED_AUTOBOTS = [
-  "optimus-prime", "bumblebee", "bumblebee-lite", "ironhide", "ironhide-deep", "jazz", "jazz-deep", "arcee",
-];
+import type { Bot, Catalog, Doc, VariantId, HarnessId, Skill } from "./types.ts";
 
 const HARNESS_IDS: HarnessId[] = ["claude", "codex"];
 
@@ -15,18 +10,81 @@ export function loadCatalog(tree: Tree): Catalog {
 }
 
 export function loadBots(tree: Tree): Bot[] {
+  if (children(tree, "roles").size) return loadVariantBots(tree);
   const bots: Bot[] = [];
-  for (const [folder, faction] of [["autobots", "autobots"], ["decepticons", "decepticons"]] as const) {
+  for (const [folder, variant] of [["autobots", "autobots"], ["decepticons", "decepticons"]] as const) {
     for (const [name, files] of children(tree, folder)) {
       if (name.startsWith("_") || name.startsWith(".")) continue;
-      const bot = loadBot(name, files, faction);
+      const bot = loadBot(name, files, variant);
       if (bot) bots.push(bot);
     }
   }
   return bots.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-function loadBot(dirName: string, files: Tree, faction: Faction): Bot | null {
+interface VariantRole {
+  name: string;
+  title: string;
+  personality: string;
+  avatar?: string;
+}
+
+interface Variant {
+  name: string;
+  team: string;
+  signoff: string;
+  roles: Record<string, VariantRole>;
+}
+
+/** Expand explicit placeholders only; variant files never execute code. */
+function renderTemplate(source: string, values: Record<string, string>): string {
+  return source.replace(/\{\{([^{}]+)\}\}/g, (_, key: string) => {
+    if (!Object.hasOwn(values, key)) throw new Error(`Unknown template field: ${key}`);
+    return values[key];
+  });
+}
+
+function loadVariantBots(tree: Tree): Bot[] {
+  const templates = [...children(tree, "roles")].filter(([name, files]) => !name.startsWith("_") && files["BOT.md"]);
+  const roleIds = templates.map(([name]) => name).sort();
+  if (!roleIds.includes("lead")) throw new Error("Role templates must include lead");
+  const sharedNames = new Set(loadSkills(children(tree, "skills")).map((s) => s.name));
+  const bots: Bot[] = [];
+  for (const [path, source] of Object.entries(tree)) {
+    if (!/^variants\/[a-z0-9][a-z0-9-]*\.json$/.test(path)) continue;
+    const variant = JSON.parse(source) as Variant;
+    if (variant.name !== path.slice(9, -5) || typeof variant.team !== "string" || /[\r\n]/.test(variant.team)
+      || typeof variant.signoff !== "string" || !variant.roles
+      || JSON.stringify(Object.keys(variant.roles).sort()) !== JSON.stringify(roleIds)) {
+      throw new Error(`Invalid variant configuration: ${path}; provide team, signoff and every role exactly once`);
+    }
+    const names = new Set<string>();
+    const values: Record<string, string> = { team: variant.team, signoff: variant.signoff };
+    for (const [role, persona] of Object.entries(variant.roles)) {
+      if (!persona || typeof persona.name !== "string" || !/^[a-z0-9][a-z0-9-]*$/.test(persona.name)
+        || names.has(persona.name) || sharedNames.has(persona.name) || typeof persona.title !== "string"
+        || /[\r\n]/.test(persona.title) || typeof persona.personality !== "string"
+        || (persona.avatar !== undefined && typeof persona.avatar !== "string")) {
+        throw new Error(`Invalid or colliding persona for ${variant.name}/${role}`);
+      }
+      names.add(persona.name);
+      values[`${role}.name`] = persona.name;
+      values[`${role}.title`] = persona.title;
+    }
+    for (const [role, files] of templates) {
+      const persona = variant.roles[role];
+      const context = { ...values, name: persona.name, title: persona.title,
+        personality: renderTemplate(persona.personality, values) };
+      const rendered = Object.fromEntries(Object.entries(files).map(([name, text]) => [name, renderTemplate(text, context)]));
+      const bot = loadBot(persona.name, rendered, variant.name)!;
+      bots.push({ ...bot, role, leadName: variant.roles.lead.name, avatar: persona.avatar });
+    }
+  }
+  if (!bots.length) throw new Error("No variant configs found in variants/");
+  return bots.sort((a, b) => a.variant.localeCompare(b.variant) || a.name.localeCompare(b.name));
+}
+
+function loadBot(dirName: string, files: Tree, variant: VariantId): Bot | null {
   const source = files["BOT.md"] ?? files["AUTOBOT.md"];
   if (source === undefined) return null;
   const { data, body, raw } = parseFrontmatter(source);
@@ -36,7 +94,7 @@ function loadBot(dirName: string, files: Tree, faction: Faction): Bot | null {
       ? splitTopLevel(data.tools)
       : undefined;
   return {
-    faction,
+    variant,
     name: String(data.name ?? dirName),
     description: String(data.description ?? ""),
     model: data.model ? String(data.model) : undefined,

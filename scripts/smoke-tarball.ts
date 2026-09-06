@@ -1,5 +1,5 @@
 /**
- * Reproduce what `bunx github:flying-dice/autobots` does, offline: archive HEAD
+ * Reproduce what `bunx github:flying-dice/bots` does, offline: archive HEAD
  * the way GitHub serves a repo tarball, install it as a dependency in a scratch
  * project, and run the package bin. Fails if the bin no longer runs from a
  * clean checkout with no build step.
@@ -30,7 +30,7 @@ sh(["bun", "add", tgz], proj);
 
 const bin = join(proj, "node_modules", ".bin", "bots");
 const version = sh([bin, "--version"], proj).trim();
-sh([bin, "install", "--all", "--faction", "decepticons", "--scope", "project", "--harness", "claude"], proj);
+sh([bin, "install", "--all", "--variant", "decepticons", "--scope", "project", "--harness", "claude"], proj);
 const agents = readdirSync(join(proj, ".claude", "agents", "bots")).length;
 if (!existsSync(join(proj, ".claude", "skills", "pre-commit", "SKILL.md")) || agents !== 11) {
   console.error("bin ran but did not install the team");

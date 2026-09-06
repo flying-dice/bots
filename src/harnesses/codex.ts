@@ -67,7 +67,7 @@ export const codex = defineHarness({
             tierNote(bot),
           ].join("\n\n")
         : [
-            `You are a Codex custom agent briefed by ${bot.faction === "autobots" ? "a team lead such as Silverbolt" : "a team lead such as Starscream"} (or directly by the user). You cannot spawn agents. Return the report format above as your final message.`,
+            `You are a Codex custom agent briefed by ${bot.leadName ?? "the team lead"} (or directly by the user). You cannot spawn agents. Return the report format above as your final message.`,
             tierNote(bot),
           ].join("\n\n"),
   },

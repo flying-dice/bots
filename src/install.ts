@@ -8,6 +8,7 @@ export interface Options {
   dryRun: boolean;
   /** CLI version recorded in the manifest. */
   version: string;
+  variant?: string;
 }
 
 export type Action = { kind: "write" | "copy" | "remove" | "prune" | "unchanged"; path: string };
@@ -28,6 +29,22 @@ export function skillItem(skill: Skill): Item {
   };
 }
 
+/** Preflight every target before pruning a roster, including user-owned name collisions. */
+export function validateInstall(items: Item[], harness: Harness, opts: Options) {
+  const manifest = readManifest(harness, opts.scope, opts.cwd);
+  const owned = new Set(Object.values(manifest.items).flat());
+  const plans = new Map(items.map((item) => [item.key, item.plan(harness, opts.scope, opts.cwd)]));
+  if (opts.variant !== undefined) {
+    for (const item of items.filter((item) => item.key.startsWith("bot:"))) {
+      const plan = plans.get(item.key)!;
+      for (const path of [...plan.files.map((file) => file.path), ...plan.dirs.map((dir) => dir.path)]) {
+        if (existsSync(path) && !owned.has(path)) throw new Error(`Cannot replace untracked agent path: ${path}`);
+      }
+    }
+  }
+  return plans;
+}
+
 /**
  * Record of everything the CLI wrote for one harness and scope, so a later
  * version can remove paths it no longer produces. Lives at
@@ -36,6 +53,7 @@ export function skillItem(skill: Skill): Item {
 export interface Manifest {
   version: string;
   updatedAt: string;
+  variant?: string;
   items: Record<string, string[]>;
 }
 
@@ -53,7 +71,7 @@ export function readManifest(harness: Harness, scope: Scope, cwd: string): Manif
   if (!existsSync(p)) return { version: "", updatedAt: "", items: {} };
   try {
     const m = JSON.parse(readFileSync(p, "utf8")) as Partial<Manifest>;
-    return { version: m.version ?? "", updatedAt: m.updatedAt ?? "", items: m.items ?? {} };
+    return { version: m.version ?? "", updatedAt: m.updatedAt ?? "", variant: m.variant, items: m.items ?? {} };
   } catch {
     return { version: "", updatedAt: "", items: {} };
   }
@@ -63,7 +81,7 @@ function writeManifest(harness: Harness, opts: Options, manifest: Manifest): voi
   if (opts.dryRun) return;
   const p = manifestPath(harness, opts.scope, opts.cwd);
   mkdirSync(dirname(p), { recursive: true });
-  const out: Manifest = { version: opts.version, updatedAt: new Date().toISOString(), items: sortKeys(manifest.items) };
+  const out: Manifest = { version: opts.version, updatedAt: new Date().toISOString(), variant: manifest.variant, items: sortKeys(manifest.items) };
   writeFileSync(p, JSON.stringify(out, null, 2) + "\n");
   rmSync(legacyManifestPath(harness, opts.scope, opts.cwd), { force: true });
 }
@@ -78,17 +96,22 @@ export function install(items: Item[], harness: Harness, opts: Options, pruneOth
   const manifest = readManifest(harness, opts.scope, opts.cwd);
   const out = new Map<string, Action[]>();
   const keep = new Set(items.map((i) => i.key));
+  const switching = opts.variant !== undefined && manifest.variant !== opts.variant;
+  // Render everything before removing any previous variant's files.
+  const plans = validateInstall(items, harness, opts);
 
-  if (pruneOthers) {
+  if (pruneOthers || switching) {
     for (const key of Object.keys(manifest.items)) {
-      if (keep.has(key) || (typeof pruneOthers === "function" && !pruneOthers(key))) continue;
+      const prune = pruneOthers === true || (typeof pruneOthers === "function" && pruneOthers(key))
+        || (switching && key.startsWith("bot:"));
+      if (keep.has(key) || !prune) continue;
       out.set(key, removeAll(manifest.items[key], "prune", opts.dryRun));
       delete manifest.items[key];
     }
   }
 
   for (const item of items) {
-    const plan = item.plan(harness, opts.scope, opts.cwd);
+    const plan = plans.get(item.key)!;
     const owned = [...plan.files.map((f) => f.path), ...plan.dirs.map((d) => d.path)];
     const stale = (manifest.items[item.key] ?? []).filter((p) => !owned.includes(p) && !owned.some((o) => p.startsWith(o + "/")));
     const actions = [
@@ -100,6 +123,7 @@ export function install(items: Item[], harness: Harness, opts: Options, pruneOth
     manifest.items[item.key] = owned;
   }
 
+  if (opts.variant !== undefined) manifest.variant = opts.variant;
   writeManifest(harness, opts, manifest);
   return out;
 }
@@ -115,6 +139,7 @@ export function uninstall(items: Item[], harness: Harness, opts: Options): Map<s
     out.set(item.key, removeAll([...new Set([...recorded, ...planned])], "remove", opts.dryRun));
     delete manifest.items[item.key];
   }
+  if (!Object.keys(manifest.items).some((key) => key.startsWith("bot:"))) delete manifest.variant;
   writeManifest(harness, opts, manifest);
   return out;
 }

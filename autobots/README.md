@@ -16,7 +16,10 @@ They accept briefs from a lead or the user and preserve independent judgment.
 Fireflight provides design direction; Skydive and Air Raid implement UI as well
 as backend work. Software responsibilities are adaptations of G1 personalities.
 
-Install with `bots install --all --faction autobots --harness claude --scope user`
+The names and personality text live in [the variant config](../variants/autobots.json);
+shared operating instructions live under `roles/`.
+
+Install with `bots install --all --variant autobots --harness claude --scope user`
 or choose `codex`. Start with `claude --agent silverbolt` or `$silverbolt` in Codex.
 The Claude project-default example selects Silverbolt.
 
@@ -27,4 +30,5 @@ in Silverbolt's definition.
 The former roster, including Optimus Prime and Arcee, is available in Git history.
 Legacy pictures remain preserved in `assets/avatars/`; see the [reference index](../assets/README.md).
 
-See the [project README](../README.md) for faction selection, upgrades, and development.
+Selecting this variant replaces the previous managed roster. See the
+[project README](../README.md) for variant selection, upgrades, and development.

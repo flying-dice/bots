@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-/** Entry point for a checkout or a `bun add github:` install: reads both faction directories and skills/ from disk. */
+/** Entry point for a checkout or package install: reads roles, variants and skills from disk. */
 import { resolve, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { run } from "./cli.ts";

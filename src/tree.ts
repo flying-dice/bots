@@ -4,10 +4,10 @@ import { join, relative } from "node:path";
 /** Relative POSIX path -> file content. The unit the CLI reads Bots and skills from. */
 export type Tree = Record<string, string>;
 
-/** Read `autobots/`, `decepticons/`, and `skills/` under `root` into a tree. */
+/** Read the packaged role templates, variant configs and shared skills. */
 export function readTree(root: string): Tree {
   const tree: Tree = {};
-  for (const top of ["autobots", "decepticons", "skills"]) {
+  for (const top of ["roles", "variants", "skills"]) {
     const dir = join(root, top);
     if (!existsSync(dir)) continue;
     walk(dir, (file) => {

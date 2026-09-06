@@ -1,6 +1,7 @@
 export type HarnessId = "claude" | "codex";
 
-export type Faction = "autobots" | "decepticons";
+/** Variant identifiers are supplied by config files, not a fixed universe list. */
+export type VariantId = string;
 
 export type Scope = "user" | "project";
 
@@ -19,9 +20,12 @@ export interface Doc {
   raw: string;
 }
 
-/** A bot defined under autobots/<name>/ or decepticons/<name>/. */
+/** A rendered role in one variant (or a legacy catalog entry). */
 export interface Bot {
-  faction: Faction;
+  variant: VariantId;
+  role?: string;
+  leadName?: string;
+  avatar?: string;
   name: string;
   description: string;
   /** Preferred model hint, e.g. "opus", "sonnet". Harnesses that support it use it. */
