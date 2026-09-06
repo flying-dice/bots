@@ -9,7 +9,7 @@ The Aerialbots are one development team, not an Optimus-led faction hierarchy.
 | <img src="../assets/avatars/air-raid.jpg" width="60" alt="Air Raid" /> | Junior frontend/backend developer | **Air Raid** | base, lite | sonnet / medium, low |
 | <img src="../assets/avatars/fireflight.jpg" width="60" alt="Fireflight" /> | Lead designer | **Fireflight** | base, deep | fable / low, high |
 | <img src="../assets/avatars/prowl.jpg" width="60" alt="Prowl" /> | Shared architect | **Prowl** | base, deep | fable / low, high |
-| <img src="../assets/avatars/ratchet.jpg" width="60" alt="Ratchet" /> | Independent QA | **Ratchet** | base, deep | opus / medium, high |
+| <img src="../assets/avatars/ratchet.jpg" width="60" alt="Ratchet" /> | Independent QA | **Ratchet** | base, deep | fable / low, high |
 
 Prowl and Ratchet sit outside the development team and can support future teams.
 They accept briefs from a lead or the user and preserve independent judgment.

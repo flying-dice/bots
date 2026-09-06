@@ -15,7 +15,7 @@ They can support future teams without duplicating their personas.
 | <img src="../assets/avatars/skywarp.jpg" width="60" alt="Skywarp" /> | **Skywarp** | Junior frontend/backend developer | base, lite | sonnet / medium, low |
 | <img src="../assets/avatars/thrust.jpg" width="60" alt="Thrust" /> | **Thrust** | Lead designer | base, deep | fable / low, high |
 | <img src="../assets/avatars/soundwave.jpg" width="60" alt="Soundwave" /> | **Soundwave** | Shared architect | base, deep | fable / low, high |
-| <img src="../assets/avatars/shockwave.jpg" width="60" alt="Shockwave" /> | **Shockwave** | Independent QA | base, deep | opus / medium, high |
+| <img src="../assets/avatars/shockwave.jpg" width="60" alt="Shockwave" /> | **Shockwave** | Independent QA | base, deep | fable / low, high |
 
 The names and personality text live in [the variant config](../variants/decepticons.json);
 shared operating instructions live under `roles/`.
