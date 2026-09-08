@@ -47,8 +47,8 @@ with a named install. Skills-only installs do not switch the roster.
 | Lead / dispatcher | lead | silverbolt | starscream |
 | Developer | developer, developer-lite | air-raid, air-raid-lite | skywarp, skywarp-lite |
 | Senior developer | senior-developer, senior-developer-deep | skydive, skydive-deep | thundercracker, thundercracker-deep |
-| Tester | tester, tester-deep | ratchet, ratchet-deep | shockwave, shockwave-deep |
-| Architect | architect, architect-deep | prowl, prowl-deep | soundwave, soundwave-deep |
+| Tester | tester, tester-deep | slingshot, slingshot-deep | ramjet, ramjet-deep |
+| Architect | architect, architect-deep | skyfire, skyfire-deep | dirge, dirge-deep |
 | Designer | designer, designer-deep | fireflight, fireflight-deep | thrust, thrust-deep |
 
 Start Claude with `claude --agent lead`, `claude --agent silverbolt`, or

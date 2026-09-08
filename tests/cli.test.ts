@@ -156,7 +156,7 @@ describe("real bots and skills", () => {
   const bots = catalog.bots.filter((b) => b.variant === "decepticons");
   test("all eleven load with Claude-specific frontmatter intact", () => {
     expect(bots.map((b) => b.name)).toEqual([
-      "shockwave", "shockwave-deep", "skywarp", "skywarp-lite", "soundwave", "soundwave-deep",
+      "dirge", "dirge-deep", "ramjet", "ramjet-deep", "skywarp", "skywarp-lite",
       "starscream", "thrust", "thrust-deep", "thundercracker", "thundercracker-deep",
     ]);
     const starscream = bots.find((b) => b.name === "starscream")!;
@@ -164,7 +164,7 @@ describe("real bots and skills", () => {
     expect(starscream.tools).toContain("AskUserQuestion");
     expect(starscream.effort).toBe("low");
     expect(starscream.frontmatter.memory).toBe("project");
-    expect(bots.find((b) => b.name === "soundwave")!.frontmatter.disallowedTools).toBe("Agent, SendMessage");
+    expect(bots.find((b) => b.name === "dirge")!.frontmatter.disallowedTools).toBe("Agent, SendMessage");
   });
   test("all twelve shared skills load", () => {
     expect(catalog.skills.map((s) => s.name)).toEqual([
@@ -187,9 +187,9 @@ describe("real bots and skills", () => {
       expect(toml).toContain(`model_reasoning_effort = "${b.effort}"`);
       expect(toml).toContain(`yours is ${CODEX_MODELS[b.model!]} at ${b.effort} effort`);
     }
-    const soundwave = HARNESSES.codex.plan(bots.find((b) => b.name === "soundwave")!, "project", "/x").files[0].content;
-    expect(soundwave).toContain('model = "gpt-6-astra"');
-    expect(soundwave).toContain('sandbox_mode = "read-only"');
+    const dirge = HARNESSES.codex.plan(bots.find((b) => b.name === "dirge")!, "project", "/x").files[0].content;
+    expect(dirge).toContain('model = "gpt-6-astra"');
+    expect(dirge).toContain('sandbox_mode = "read-only"');
     expect(HARNESSES.codex.plan(bots.find((b) => b.name === "skywarp")!, "project", "/x").files[0].content).toContain('sandbox_mode = "workspace-write"');
   });
   test("codex installs the dispatcher as a skill too, so $starscream takes over the primary session", () => {
@@ -277,7 +277,7 @@ describe("factions", () => {
   test("loads the Aerialbots and shared specialists with valid dispatch targets", () => {
     const originals = catalog.bots.filter((b) => b.variant === "autobots");
     expect(originals).toHaveLength(11);
-    expect(originals.map((b) => b.name)).toEqual(["air-raid", "air-raid-lite", "fireflight", "fireflight-deep", "prowl", "prowl-deep", "ratchet", "ratchet-deep", "silverbolt", "skydive", "skydive-deep"]);
+    expect(originals.map((b) => b.name)).toEqual(["air-raid", "air-raid-lite", "fireflight", "fireflight-deep", "silverbolt", "skydive", "skydive-deep", "skyfire", "skyfire-deep", "slingshot", "slingshot-deep"]);
     for (const bot of originals) {
       expect(parseFrontmatter(HARNESSES.claude.plan(bot, "project", "/x").files[0].content).body.trim()).toBe(bot.prompt);
     }
