@@ -166,9 +166,9 @@ describe("real bots and skills", () => {
     expect(starscream.frontmatter.memory).toBe("project");
     expect(bots.find((b) => b.name === "dirge")!.frontmatter.disallowedTools).toBe("Agent, SendMessage");
   });
-  test("all twelve shared skills load", () => {
+  test("all fourteen shared skills load", () => {
     expect(catalog.skills.map((s) => s.name)).toEqual([
-      "antigravity-harness", "claude-harness", "clean-code-review", "codex-harness", "coding-styleguide", "pre-commit", "project-status", "refactor", "repodoc-workflow", "requirements-review", "sprint-plan", "sprint-start",
+      "antigravity-harness", "claude-harness", "clean-code-review", "codex-harness", "coding-styleguide", "postbuild-synthetic-usability", "pre-commit", "prebuild-synthetic-ux", "project-status", "refactor", "repodoc-workflow", "requirements-review", "sprint-plan", "sprint-start",
     ]);
   });
   test("claude adapter reproduces BOT.md verbatim", () => {

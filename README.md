@@ -87,11 +87,17 @@ same placeholders. Adding a role requires updating every variant config.
 ## Skills and installed paths
 
 The shared skills are `antigravity-harness`, `claude-harness`, `clean-code-review`,
-`codex-harness`, `coding-styleguide`,
-`pre-commit`, `project-status`, `refactor`, `repodoc-workflow`,
-`requirements-review`, `sprint-plan`, and `sprint-start`.
+`codex-harness`, `coding-styleguide`, `postbuild-synthetic-usability`,
+`pre-commit`, `prebuild-synthetic-ux`, `project-status`, `refactor`,
+`repodoc-workflow`, `requirements-review`, `sprint-plan`, and `sprint-start`.
 The sprint skills were adopted from vector-sigma and describe its GitLab
 planning and supervisor workflows.
+
+`prebuild-synthetic-ux` and `postbuild-synthetic-usability` simulate user
+research before and after a build; the prebuild skill also hands off key
+journeys and user stories for the builder. Both keep personas sceptical, stay inside
+the brief or artifact, and label findings as evidence or hypothesis; their
+output directs real user research and does not replace it.
 
 `coding-styleguide` includes Rust, TypeScript, JavaScript, Go, Lua, and Python
 references for idiomatic strict typing and explicit expected-error handling.
