@@ -1,6 +1,6 @@
 ---
 name: postbuild-synthetic-usability
-description: Simulated usability review of something that exists (code, screenshot, prototype, wireframe). Task walkthroughs, heuristic and WCAG audit, edge cases and prioritised findings.
+description: Simulated usability review of something that exists (code, screenshot, prototype, wireframe). Task walkthroughs, heuristic and WCAG audit, edge cases and prioritised findings. Use when something has been built or designed and you want to find usability and accessibility problems before real users do.
 ---
 
 # Post-build synthetic usability review
@@ -19,7 +19,7 @@ Everything else in this skill is judgment. These are not.
 
 **2. Simulated users behave like busy people.** They skim, misread jargon, pick the wrong control when two look alike, hesitate when the next step is unclear, and abandon when effort outweighs value. They do not read everything, forgive friction or praise the design. If every walkthrough succeeds cleanly, look again.
 
-**3. Label each finding by how sure you can be.**
+**3. Label each finding by how sure you can be.** Every finding carries exactly one of these labels, including minor ones; severity (blocker, major, minor) is separate and never replaces it.
 - *Defect*: verifiable in the artifact. Point to the element or line.
 - *Likely issue*: breaks a recognised heuristic or pattern. Name it.
 - *Hypothesis*: a prediction about behaviour that needs real users.
@@ -34,9 +34,9 @@ Six stages. Scale them to the request: a single component may need only 1, 3 and
 2. **Task walkthrough.** Step through each primary task: what the user sees, what they would most likely do, where they stall. Record each as completed, struggled or abandoned, with the reason.
 3. **Heuristic and accessibility audit.** Use Nielsen's heuristics and WCAG 2.2 AA as lenses, not checklists to fill in. Report only what applies.
 4. **Edge cases and errors.** Empty, invalid, slow, failed, interrupted, repeated. Does the artifact handle each one, or go silent?
-5. **Prioritise.** Blocker, major or minor, judged by effect on task completion and how many users are likely to hit it.
+5. **Prioritise.** Blocker, major or minor, judged by effect on task completion and how many users are likely to hit it. A security defect (such as script injection) or one that can silently lose or corrupt user data is always a blocker, even if every task still completes.
 6. **Validation.** What to confirm with real users or assistive technology, and the cheapest way to do it.
 
 ## Output
 
-Lead with blockers and their fixes. For each finding: what, where, why it matters, its label, and a suggested fix. Format to suit the request. Do not pad with praise; mention what works only when it is a deliberate choice worth protecting from later changes.
+Lead with blockers and their fixes. For each finding: what, where, why it matters, its severity, its label, and a suggested fix. Format to suit the request. Do not pad with praise; mention what works only when it is a deliberate choice worth protecting from later changes.
