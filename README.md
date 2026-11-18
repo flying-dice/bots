@@ -94,7 +94,8 @@ The sprint skills were adopted from vector-sigma and describe its GitLab
 planning and supervisor workflows.
 
 `prebuild-synthetic-ux` and `postbuild-synthetic-usability` simulate user
-research before and after a build. Both keep personas sceptical, stay inside
+research before and after a build; the prebuild skill also hands off key
+journeys and user stories for the builder. Both keep personas sceptical, stay inside
 the brief or artifact, and label findings as evidence or hypothesis; their
 output directs real user research and does not replace it.
 

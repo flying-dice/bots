@@ -1,6 +1,6 @@
 ---
 name: prebuild-synthetic-ux
-description: Simulated UX discovery before anything is built. Constrained personas, discovery interviews, journey maps and a ranked list of assumptions to test with real users.
+description: Simulated UX discovery before anything is built. Constrained personas, discovery interviews, journey maps, a ranked list of assumptions to test with real users, and key journeys and user stories a builder can work from.
 ---
 
 # Pre-build synthetic UX discovery
@@ -28,7 +28,7 @@ Synthetic quotes illustrate reasoning; they are never evidence. No invented stat
 
 ## Workflow
 
-Six stages. Scale them to the request: a quick gut-check may need only 1, 2 and 6. Skip what does not apply and say what you skipped.
+Seven stages. Scale them to the request: a quick gut-check may need only 1, 2 and 6. Skip what does not apply and say what you skipped.
 
 1. **Frame.** Restate the idea, the user, the job, and the assumptions it rests on, in a few lines.
 2. **Personas.** Three to five, differing on things that change behaviour (context, expertise, motivation, constraints), not on demographics.
@@ -36,7 +36,26 @@ Six stages. Scale them to the request: a quick gut-check may need only 1, 2 and 
 4. **Journey map.** The current-state journey for each segment that matters: steps, friction, workarounds, and the moments where the idea could help or would be ignored.
 5. **Synthesis.** Where personas converge and where they split, the riskiest assumptions, and what would kill the idea.
 6. **Validation plan.** Rank hypotheses by how damaging it is to be wrong and how uncertain you are. Give the cheapest real-world test for each.
+7. **Build handoff.** Turn the synthesis into key journeys and user stories, in the format below. Skip it only for a gut-check or when nothing is going to be built.
 
 ## Output
 
-Lead with the three to five riskiest assumptions and how to test them. Supporting material (personas, excerpts, journey) comes after, in whatever format suits the request. Keep interview excerpts short: enough to show the reasoning, not a transcript. End with one line reminding the reader that this is synthetic and what it cannot tell them.
+Use this structure, in this order. Keep interview excerpts short: enough to show the reasoning, not a transcript.
+
+1. A one-line banner saying this is synthetic: hypotheses to test, not findings.
+2. **Frame.** The idea, the job, and the gaps the brief leaves open, each labelled.
+3. **Riskiest assumptions and cheapest tests.** Three to five, ranked, each with its label and a concrete test. Then one line on what would kill the idea.
+4. **Personas, interview excerpts, current-state journey and synthesis.** Compact; formatting to suit.
+5. **Key journeys.** Four to six end-to-end journeys through the proposed product. For each one:
+   - a name and the trigger that starts it;
+   - numbered steps through the product;
+   - a success end state, including what the user sees when it goes wrong (no match, empty, failed) where that matters.
+6. **User stories.** Ten to fifteen, numbered, in the form "As a…, I want…, so that…". For each one:
+   - one to three short acceptance criteria a tester could check;
+   - a priority: **Must**, **Should** or **Could**;
+   - the assumption, persona or gap it addresses, in brackets.
+   Rule 2 still holds: a story that needs something the brief does not state is marked *assumption*, not presented as given.
+7. **Skipped / limits.** What you skipped and why.
+8. A closing line saying this is synthetic and naming what it cannot tell the reader.
+
+Journeys and stories are a starting backlog shaped by hypotheses, not validated requirements. Leave sections 5 and 6 out only when stage 7 was skipped, and say so.
