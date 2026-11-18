@@ -1,6 +1,6 @@
 ---
 name: prebuild-synthetic-ux
-description: Simulated UX discovery before anything is built. Constrained personas, discovery interviews, journey maps, a ranked list of assumptions to test with real users, and key journeys and user stories a builder can work from.
+description: Simulated UX discovery before anything is built. Constrained personas, discovery interviews, journey maps, a ranked list of assumptions to test with real users, and key journeys and user stories a builder can work from. Use when an idea, feature or product is being considered and before it is designed or built.
 ---
 
 # Pre-build synthetic UX discovery
